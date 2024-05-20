@@ -6,6 +6,7 @@ use App\Filament\Resources\PurchaseInvoiceResource\Pages;
 use App\Filament\Resources\PurchaseInvoiceResource\RelationManagers;
 use App\Models\Product;
 use App\Models\PurchaseInvoice;
+use Closure;
 use Filament\Forms;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Section;
@@ -16,6 +17,7 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Validation\Rule;
 
 class PurchaseInvoiceResource extends Resource
 {
@@ -60,24 +62,32 @@ class PurchaseInvoiceResource extends Resource
                             ->maxLength(255),
                         Forms\Components\TextInput::make('invoice_amount')
                             ->required()
-                            ->numeric(),
+                            ->numeric()
+                            // Rule to See Difference Between Invoice_amount and Total_amount
+                            ->rules([
+                                fn(Get $get): Closure => function (string $attribute, $value, Closure $fail) use ($get){
+                                    $invoice_amount = $get('invoice_amount');
+                                    $total_amount = $get('total_amount');
+                                    if ($invoice_amount > $total_amount) {
+                                        $fail('Invoice amount must be less than or equal to total amount.');
+                                        }
+                                }
+                            ])
                     ])->columns(3),
                 Section::make()
                     ->schema([
                         Repeater::make('purchaseInvoiceItems')
                             ->relationship('purchaseInvoiceItems')
-                            ->label('Purchase Invoice')
+                            ->label('Purchase Invoice Items')
                             ->schema([
-                                // SELECT PRODUCT START
                                 Forms\Components\Select::make('product_id')
                                     ->relationship(name: 'product', titleAttribute: 'name')
                                     ->required()
-                                    ->label('SELECT PRODUCT')
+                                    ->label('Select Product')
                                     ->native(false)
                                     ->searchable()
                                     ->preload()
                                     ->reactive()
-                                    // SET PRODUCT PURCHASE PRICE/SALE PRICE FROM DATABASE
                                     ->afterStateUpdated(function ($state, callable $set, callable $get) {
                                         if ($state) {
                                             $product = Product::find($state);
@@ -90,8 +100,6 @@ class PurchaseInvoiceResource extends Resource
                                             }
                                         }
                                     })
-                                    // END SET PRODUCT PURCHASE PRICE/SALE PRICE FROM DATABASE
-                                    // Disable options that are already selected in other rows
                                     ->disableOptionWhen(function ($value, $state, Get $get) {
                                         return collect($get('../*.product_id'))
                                             ->reject(fn($id) => $id == $state)
@@ -99,8 +107,6 @@ class PurchaseInvoiceResource extends Resource
                                             ->contains($value);
                                     })
                                     ->columnSpan(3),
-                                // SELECT PRODUCT END
-                                // Quantity START
                                 Forms\Components\TextInput::make('quantity')
                                     ->required()
                                     ->reactive()
@@ -113,13 +119,19 @@ class PurchaseInvoiceResource extends Resource
                                         $discount_amount = ($sub_total * $discount_percentage) / 100;
                                         $sub_total_with_discount = $sub_total - $discount_amount;
                                         $set('sub_total', $sub_total_with_discount);
-                                         // Update total amount
-                                         $total_amount = collect($get('../../purchaseInvoiceItems'))
-                                         ->sum(fn($item) => $item['sub_total'] ?? 0);
-                                         $set('../../total_amount', $total_amount);
+
+                                        // Update total amount without discount
+                                        $total_amount = collect($get('../../purchaseInvoiceItems'))
+                                            ->sum(fn($item) => $item['sub_total'] ?? 0);
+                                        $set('../../original_total_amount', $total_amount);
+
+                                        // Recalculate the final total amount considering the discount and tax on total
+                                        $overall_discount = $get('../../discount') ?? 0;
+                                        $tax_percentage = $get('../../tax') ?? 0;
+                                        $total_with_discount = $total_amount - ($total_amount * $overall_discount / 100);
+                                        $total_with_tax = $total_with_discount + ($total_with_discount * $tax_percentage / 100);
+                                        $set('../../total_amount', $total_with_tax);
                                     }),
-                                // Quantity END
-                                //Start purchase_price
                                 Forms\Components\TextInput::make('purchase_price')
                                     ->label('Pur. Price')
                                     ->required()
@@ -133,18 +145,22 @@ class PurchaseInvoiceResource extends Resource
                                         $discount_amount = ($sub_total * $discount_percentage) / 100;
                                         $sub_total_with_discount = $sub_total - $discount_amount;
                                         $set('sub_total', $sub_total_with_discount);
-                                         // Update total amount
-                                         $total_amount = collect($get('../../purchaseInvoiceItems'))
-                                         ->sum(fn($item) => $item['sub_total'] ?? 0);
-                                         $set('../../total_amount', $total_amount);
+
+                                        // Update total amount without discount
+                                        $total_amount = collect($get('../../purchaseInvoiceItems'))
+                                            ->sum(fn($item) => $item['sub_total'] ?? 0);
+                                        $set('../../original_total_amount', $total_amount);
+
+                                        // Recalculate the final total amount considering the discount and tax on total
+                                        $overall_discount = $get('../../discount') ?? 0;
+                                        $tax_percentage = $get('../../tax') ?? 0;
+                                        $total_with_discount = $total_amount - ($total_amount * $overall_discount / 100);
+                                        $total_with_tax = $total_with_discount + ($total_with_discount * $tax_percentage / 100);
+                                        $set('../../total_amount', $total_with_tax);
                                     }),
-                                //End purchase_price
-                                // START sale_price
                                 Forms\Components\TextInput::make('sale_price')
                                     ->required()
                                     ->numeric(),
-                                // END sale_price
-                                // START discount
                                 Forms\Components\TextInput::make('discount')
                                     ->label('disc%')
                                     ->reactive()
@@ -157,112 +173,143 @@ class PurchaseInvoiceResource extends Resource
                                         $discount_amount = ($sub_total * $discount_percentage) / 100;
                                         $sub_total_with_discount = $sub_total - $discount_amount;
                                         $set('sub_total', $sub_total_with_discount);
-                                         // Update total amount
-                                         $total_amount = collect($get('../../purchaseInvoiceItems'))
-                                        ->sum(fn($item) => $item['sub_total'] ?? 0);
-                                        $set('../../total_amount', $total_amount);
+
+                                        // Update total amount without discount
+                                        $total_amount = collect($get('../../purchaseInvoiceItems'))
+                                            ->sum(fn($item) => $item['sub_total'] ?? 0);
+                                        $set('../../original_total_amount', $total_amount);
+
+                                        // Recalculate the final total amount considering the discount and tax on total
+                                        $overall_discount = $get('../../discount') ?? 0;
+                                        $tax_percentage = $get('../../tax') ?? 0;
+                                        $total_with_discount = $total_amount - ($total_amount * $overall_discount / 100);
+                                        $total_with_tax = $total_with_discount + ($total_with_discount * $tax_percentage / 100);
+                                        $set('../../total_amount', $total_with_tax);
                                     }),
-                                // END discount
-                                // START subtotal
                                 Forms\Components\TextInput::make('sub_total')
                                     ->required()
                                     ->readOnly()
                                     ->numeric()
                                     ->afterStateUpdated(function ($state, callable $set, callable $get) {
+                                        // Update total amount without discount
                                         $total_amount = collect($get('../../purchaseInvoiceItems'))
                                             ->sum(fn($item) => $item['sub_total'] ?? 0);
-                                        $set('../../total_amount', $total_amount);
+                                        $set('../../original_total_amount', $total_amount);
+
+                                        // Recalculate the final total amount considering the discount and tax on total
+                                        $overall_discount = $get('../../discount') ?? 0;
+                                        $tax_percentage = $get('../../tax') ?? 0;
+                                        $total_with_discount = $total_amount - ($total_amount * $overall_discount / 100);
+                                        $total_with_tax = $total_with_discount + ($total_with_discount * $tax_percentage / 100);
+                                        $set('../../total_amount', $total_with_tax);
                                     }),
-                                // END subtotal
                             ])->columns(8)
-                            ->reactive()
-                            ->afterStateUpdated(function ($state, callable $set, callable $get) {
-                                $total_amount = collect($get('purchaseInvoiceItems'))
-                                    ->sum(fn($item) => $item['sub_total']);
-                                $set('total_amount', $total_amount);
-                            }),
+                            ->reactive(),
                     ]),
-                // START SECTION TAX, DISCOUNT, TOTAL
                 Forms\Components\Section::make('Tax, Discount, Total')
                     ->schema([
                         Forms\Components\TextInput::make('tax')
-                            ->numeric(),
+                            ->label('Tax%')
+                            ->numeric()
+                            ->reactive()
+                            ->afterStateUpdated(function($state, callable $set, callable $get) {
+                                $tax_percentage = $state ?? 0;
+                                $original_total_amount = $get('original_total_amount') ?? 0;
+                                $overall_discount = $get('discount') ?? 0;
+                                $total_with_discount = $original_total_amount - ($original_total_amount * $overall_discount / 100);
+                                $total_with_tax = $total_with_discount + ($total_with_discount * $tax_percentage / 100);
+                                $set('total_amount', $total_with_tax);
+                            }),
                         Forms\Components\TextInput::make('discount')
-                            ->numeric(),
+                            ->label('Discount %')
+                            ->numeric()
+                            ->reactive()
+                            ->afterStateUpdated(function($state, callable $set, callable $get) {
+                                $discount_percentage = $state ?? 0;
+                                $original_total_amount = $get('original_total_amount') ?? 0;
+                                $total_with_discount = $original_total_amount - ($original_total_amount * $discount_percentage / 100);
+                                $tax_percentage = $get('tax') ?? 0;
+                                $total_with_tax = $total_with_discount + ($total_with_discount * $tax_percentage / 100);
+                                $set('total_amount', $total_with_tax);
+                            }),
+                        Forms\Components\TextInput::make('original_total_amount')
+                            ->numeric()
+                            ->reactive()
+                            ->hidden(),
                         Forms\Components\TextInput::make('total_amount')
                             ->required()
                             ->numeric()
                             ->reactive()
                             ->readOnly(),
                     ])->columns(3),
-            ])->extraAttributes(['onkeydown' => 'return event.key != "Enter";']); // Prevent Enter key from submitting the form;
-    }
-    
+            ])->extraAttributes(['onkeydown' => 'return event.key != "Enter";']);
+        }
 
 
-    public static function table(Table $table): Table
-    {
-        return $table
-            ->columns([
-                Tables\Columns\TextColumn::make('supplier_id')
-                    ->numeric()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('posted_number')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('posted_date')
-                    ->date()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('invoice_number')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('invoice_amount')
-                    ->numeric()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('tax')
-                    ->numeric()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('discount')
-                    ->numeric()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('total_amount')
-                    ->numeric()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('created_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('updated_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-            ])
-            ->filters([
+
+        public static function table(Table $table): Table
+        {
+            return $table
+                ->columns([
+                    Tables\Columns\TextColumn::make('supplier_id')
+                        ->numeric()
+                        ->sortable(),
+                    Tables\Columns\TextColumn::make('posted_number')
+                        ->searchable(),
+                    Tables\Columns\TextColumn::make('posted_date')
+                        ->date()
+                        ->sortable(),
+                    Tables\Columns\TextColumn::make('invoice_number')
+                        ->searchable(),
+                    Tables\Columns\TextColumn::make('invoice_amount')
+                        ->numeric()
+                        ->sortable(),
+                    Tables\Columns\TextColumn::make('tax')
+                        ->numeric()
+                        ->sortable(),
+                    Tables\Columns\TextColumn::make('discount')
+                        ->numeric()
+                        ->sortable(),
+                    Tables\Columns\TextColumn::make('total_amount')
+                        ->numeric()
+                        ->sortable(),
+                    Tables\Columns\TextColumn::make('created_at')
+                        ->dateTime()
+                        ->sortable()
+                        ->toggleable(isToggledHiddenByDefault: true),
+                    Tables\Columns\TextColumn::make('updated_at')
+                        ->dateTime()
+                        ->sortable()
+                        ->toggleable(isToggledHiddenByDefault: true),
+                ])
+                ->filters([
+                    //
+                ])
+                ->actions([
+                    Tables\Actions\ViewAction::make(),
+                    Tables\Actions\EditAction::make(),
+                ])
+                ->bulkActions([
+                    Tables\Actions\BulkActionGroup::make([
+                        Tables\Actions\DeleteBulkAction::make(),
+                    ]),
+                ]);
+        }
+
+        public static function getRelations(): array
+        {
+            return [
                 //
-            ])
-            ->actions([
-                Tables\Actions\ViewAction::make(),
-                Tables\Actions\EditAction::make(),
-            ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                ]),
-            ]);
-    }
+            ];
+        }
 
-    public static function getRelations(): array
-    {
-        return [
-            //
-        ];
+        public static function getPages(): array
+        {
+            return [
+                'index' => Pages\ListPurchaseInvoices::route('/'),
+                'create' => Pages\CreatePurchaseInvoice::route('/create'),
+                'view' => Pages\ViewPurchaseInvoice::route('/{record}'),
+                'edit' => Pages\EditPurchaseInvoice::route('/{record}/edit'),
+            ];
+        }
     }
-
-    public static function getPages(): array
-    {
-        return [
-            'index' => Pages\ListPurchaseInvoices::route('/'),
-            'create' => Pages\CreatePurchaseInvoice::route('/create'),
-            'view' => Pages\ViewPurchaseInvoice::route('/{record}'),
-            'edit' => Pages\EditPurchaseInvoice::route('/{record}/edit'),
-        ];
-    }
-}
