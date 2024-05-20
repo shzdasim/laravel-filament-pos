@@ -19,7 +19,7 @@ class PurchaseInvoice extends Model
         parent::boot();
 
         static::creating(function ($model) {
-            $model->code = self::generateCode();
+            $model->posted_number = self::generateCode();
         });
     }
 
@@ -35,7 +35,7 @@ class PurchaseInvoice extends Model
             if (!$latestProduct) {
                 $newCode = 'PRINV-0001';
             } else {
-                $lastCode = $latestProduct->code;
+                $lastCode = $latestProduct->posted_number;
                 $number = (int) substr($lastCode, 4) + 1;
                 $newCode = 'PRINV-' . str_pad($number, 4, '0', STR_PAD_LEFT);
             }

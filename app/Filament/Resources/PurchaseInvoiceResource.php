@@ -33,47 +33,43 @@ class PurchaseInvoiceResource extends Resource
 
     public static function form(Form $form): Form
     {
-        $products = Product::get();
         return $form
             ->schema([
-
                 Forms\Components\Section::make()
-                ->schema([
-                    Forms\Components\TextInput::make('posted_number')
-                    ->required()
-                    ->maxLength(255)
-                    ->readOnly()
-                    ->default(PurchaseInvoice::generateCode()),
-                    Forms\Components\DatePicker::make('posted_date')
-                    ->required()
-                    ->native(false)
-                    ->default(now()),
-                ])->columns(2),
+                    ->schema([
+                        Forms\Components\TextInput::make('posted_number')
+                            ->required()
+                            ->maxLength(255)
+                            ->readOnly()
+                            ->default(PurchaseInvoice::generateCode()),
+                        Forms\Components\DatePicker::make('posted_date')
+                            ->required()
+                            ->native(false)
+                            ->default(now()),
+                    ])->columns(2),
                 Forms\Components\Section::make()
-                ->schema([
-                    Forms\Components\Select::make('supplier_id')
-                    ->relationship('supplier', 'name')
-                    ->searchable()
-                    ->native(false)
-                    ->preload()
-                    ->required(),
-                    Forms\Components\TextInput::make('invoice_number')
-                    ->required()
-                    ->maxLength(255),
-                    Forms\Components\TextInput::make('invoice_amount')
-                    ->required()
-                    ->numeric(),
-                ])->columns(3),
-                
-              
-               Section::make()
-               ->schema([
-                Repeater::make('purchaseInvoiceItems')
-                ->relationship('purchaseInvoiceItems')
-                ->label('Purchase Invoice')
-                ->schema([
-                    // SELECT PRODUCT START
-                    Forms\Components\Select::make('product_id')
+                    ->schema([
+                        Forms\Components\Select::make('supplier_id')
+                            ->relationship('supplier', 'name')
+                            ->searchable()
+                            ->native(false)
+                            ->preload()
+                            ->required(),
+                        Forms\Components\TextInput::make('invoice_number')
+                            ->required()
+                            ->maxLength(255),
+                        Forms\Components\TextInput::make('invoice_amount')
+                            ->required()
+                            ->numeric(),
+                    ])->columns(3),
+                Section::make()
+                    ->schema([
+                        Repeater::make('purchaseInvoiceItems')
+                            ->relationship('purchaseInvoiceItems')
+                            ->label('Purchase Invoice')
+                            ->schema([
+                                // SELECT PRODUCT START
+                                Forms\Components\Select::make('product_id')
                                     ->relationship(name: 'product', titleAttribute: 'name')
                                     ->required()
                                     ->label('SELECT PRODUCT')
@@ -81,115 +77,128 @@ class PurchaseInvoiceResource extends Resource
                                     ->searchable()
                                     ->preload()
                                     ->reactive()
-                                    ->afterStateUpdated(function ($state, callable $set, callable $get){
-                                        if ($state){
+                                    // SET PRODUCT PURCHASE PRICE/SALE PRICE FROM DATABASE
+                                    ->afterStateUpdated(function ($state, callable $set, callable $get) {
+                                        if ($state) {
                                             $product = Product::find($state);
-                                            if ($product){
+                                            if ($product) {
                                                 $set('purchase_price', $product->purchase_price);
                                                 $set('sale_price', $product->sale_price);
-                                                $quantity = $get('quantity') ?? 0;
-                                                $set('sub_total', $product->purchase_price * $quantity);
-                                            }
-                                            else{
+                                            } else {
                                                 $set('purchase_price', null);
                                                 $set('sale_price', null);
-                                                $set('sub_total', null);
                                             }
                                         }
                                     })
+                                    // END SET PRODUCT PURCHASE PRICE/SALE PRICE FROM DATABASE
                                     // Disable options that are already selected in other rows
-                                ->disableOptionWhen(function ($value, $state, Get $get) {
-                                    return collect($get('../*.product_id'))
-                                        ->reject(fn($id) => $id == $state)
-                                        ->filter()
-                                        ->contains($value);
-                                })
-                                ->columnSpan(3),
-                    // SELECT PRODUCT END
-                    // Quantity START
-                    Forms\Components\TextInput::make('quantity')
-                    ->required()
-                    ->reactive()
-                    ->numeric()
-                    ->afterStateUpdated(function ($state, callable $set, callable $get){
-                        $productId = $get('product_id');
-                        $product = Product::find($productId);
-                        $purchase_price = $get('purchase_price') ?? 0;
-                        $discount_percentage = $get('discount') ?? 0;
-                        $quantity = $state ?? 0;
-                        $sub_total = $purchase_price * $quantity;
-                        $discount_amount = ($sub_total * $discount_percentage) / 100;
-                        $sub_total_with_discount = $sub_total - $discount_amount;
-                        $set('sub_total', $sub_total_with_discount);
-                    })
-                    ,
-                    // Quantity END
-                    //Start purchase_price
-                    Forms\Components\TextInput::make('purchase_price')
-                    ->label('Pur. Price')
-                    ->required()
-                    ->reactive()
-                    ->numeric()
-                    ->afterStateUpdated(function($state, callable $set, callable $get){
-                        $productId = $get('product_id');
-                        $product = Product::find($productId);
-                        $purchase_price = $state ?? 0;
-                        $quantity = $get('quantity') ?? 0;
-                        $discount_percentage = $get('discount') ?? 0;
-                        $sub_total = $purchase_price * $quantity;
-                        $discount_amount = ($sub_total * $discount_percentage) / 100;
-                        $sub_total_with_discount = $sub_total - $discount_amount;
-                        $set('sub_total', $sub_total_with_discount);
-                    })
-                    ,
-                    //End purchase_price
-                    // START sale_price
-                    Forms\Components\TextInput::make('sale_price')
-                    ->required()
-                    ->numeric(),
-                    // END sale_price
-                    // START discount
-                    Forms\Components\TextInput::make('discount')
-                    ->label('disc%')
-                    ->required()
-                    ->reactive()
-                    ->numeric()
-                    ->afterStateUpdated(function($state, callable $set, callable $get){
-                        $productId = $get('product_id');
-                        $product = Product::find($productId);
-                        $discount_percentage = $state ?? 0;
-                        $purchase_price = $get('purchase_price') ?? 0;
-                        $quantity = $get('quantity') ?? 0;
-                        $sub_total = $purchase_price * $quantity;
-                        $discount_amount = ($sub_total * $discount_percentage) / 100;
-                        $sub_total_with_discount = $sub_total - $discount_amount;
-                        $set('sub_total', $sub_total_with_discount);
-                    }),
-                    // END discount
-                    // START subtotal
-                    Forms\Components\TextInput::make('sub_total')
-                    ->required()
-                    ->readOnly()
-                    ->numeric(),
-                    // END subtotal
-                ])->columns(8),
-               ]),
-                
-                
+                                    ->disableOptionWhen(function ($value, $state, Get $get) {
+                                        return collect($get('../*.product_id'))
+                                            ->reject(fn($id) => $id == $state)
+                                            ->filter()
+                                            ->contains($value);
+                                    })
+                                    ->columnSpan(3),
+                                // SELECT PRODUCT END
+                                // Quantity START
+                                Forms\Components\TextInput::make('quantity')
+                                    ->required()
+                                    ->reactive()
+                                    ->numeric()
+                                    ->afterStateUpdated(function ($state, callable $set, callable $get) {
+                                        $purchase_price = $get('purchase_price') ?? 0;
+                                        $discount_percentage = $get('discount') ?? 0;
+                                        $quantity = $state ?? 0;
+                                        $sub_total = $purchase_price * $quantity;
+                                        $discount_amount = ($sub_total * $discount_percentage) / 100;
+                                        $sub_total_with_discount = $sub_total - $discount_amount;
+                                        $set('sub_total', $sub_total_with_discount);
+                                         // Update total amount
+                                         $total_amount = collect($get('../../purchaseInvoiceItems'))
+                                         ->sum(fn($item) => $item['sub_total'] ?? 0);
+                                         $set('../../total_amount', $total_amount);
+                                    }),
+                                // Quantity END
+                                //Start purchase_price
+                                Forms\Components\TextInput::make('purchase_price')
+                                    ->label('Pur. Price')
+                                    ->required()
+                                    ->reactive()
+                                    ->numeric()
+                                    ->afterStateUpdated(function ($state, callable $set, callable $get) {
+                                        $purchase_price = $state ?? 0;
+                                        $quantity = $get('quantity') ?? 0;
+                                        $discount_percentage = $get('discount') ?? 0;
+                                        $sub_total = $purchase_price * $quantity;
+                                        $discount_amount = ($sub_total * $discount_percentage) / 100;
+                                        $sub_total_with_discount = $sub_total - $discount_amount;
+                                        $set('sub_total', $sub_total_with_discount);
+                                         // Update total amount
+                                         $total_amount = collect($get('../../purchaseInvoiceItems'))
+                                         ->sum(fn($item) => $item['sub_total'] ?? 0);
+                                         $set('../../total_amount', $total_amount);
+                                    }),
+                                //End purchase_price
+                                // START sale_price
+                                Forms\Components\TextInput::make('sale_price')
+                                    ->required()
+                                    ->numeric(),
+                                // END sale_price
+                                // START discount
+                                Forms\Components\TextInput::make('discount')
+                                    ->label('disc%')
+                                    ->reactive()
+                                    ->numeric()
+                                    ->afterStateUpdated(function ($state, callable $set, callable $get) {
+                                        $discount_percentage = $state ?? 0;
+                                        $purchase_price = $get('purchase_price') ?? 0;
+                                        $quantity = $get('quantity') ?? 0;
+                                        $sub_total = $purchase_price * $quantity;
+                                        $discount_amount = ($sub_total * $discount_percentage) / 100;
+                                        $sub_total_with_discount = $sub_total - $discount_amount;
+                                        $set('sub_total', $sub_total_with_discount);
+                                         // Update total amount
+                                         $total_amount = collect($get('../../purchaseInvoiceItems'))
+                                        ->sum(fn($item) => $item['sub_total'] ?? 0);
+                                        $set('../../total_amount', $total_amount);
+                                    }),
+                                // END discount
+                                // START subtotal
+                                Forms\Components\TextInput::make('sub_total')
+                                    ->required()
+                                    ->readOnly()
+                                    ->numeric()
+                                    ->afterStateUpdated(function ($state, callable $set, callable $get) {
+                                        $total_amount = collect($get('../../purchaseInvoiceItems'))
+                                            ->sum(fn($item) => $item['sub_total'] ?? 0);
+                                        $set('../../total_amount', $total_amount);
+                                    }),
+                                // END subtotal
+                            ])->columns(8)
+                            ->reactive()
+                            ->afterStateUpdated(function ($state, callable $set, callable $get) {
+                                $total_amount = collect($get('purchaseInvoiceItems'))
+                                    ->sum(fn($item) => $item['sub_total']);
+                                $set('total_amount', $total_amount);
+                            }),
+                    ]),
                 // START SECTION TAX, DISCOUNT, TOTAL
                 Forms\Components\Section::make('Tax, Discount, Total')
-                ->schema([
-                    Forms\Components\TextInput::make('tax')
-                        ->numeric(),
-                    Forms\Components\TextInput::make('discount')
-                        ->numeric(),
-                    Forms\Components\TextInput::make('total_amount')
-                        ->required()
-                        ->numeric()
-                        ->readOnly(),
-                ])->columns(3),
-            ]) ->extraAttributes(['onkeydown' => 'return event.key != "Enter";']); // Prevent Enter key from submitting the form;
+                    ->schema([
+                        Forms\Components\TextInput::make('tax')
+                            ->numeric(),
+                        Forms\Components\TextInput::make('discount')
+                            ->numeric(),
+                        Forms\Components\TextInput::make('total_amount')
+                            ->required()
+                            ->numeric()
+                            ->reactive()
+                            ->readOnly(),
+                    ])->columns(3),
+            ])->extraAttributes(['onkeydown' => 'return event.key != "Enter";']); // Prevent Enter key from submitting the form;
     }
+    
+
 
     public static function table(Table $table): Table
     {
