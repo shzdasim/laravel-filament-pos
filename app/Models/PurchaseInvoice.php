@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 
 class PurchaseInvoice extends Model
 {
@@ -24,14 +25,30 @@ class PurchaseInvoice extends Model
 
     public static function generateCode()
     {
-        $latestProduct = self::orderBy('id', 'desc')->first();
-        if (!$latestProduct) {
-            return 'PRINV-0001';
-        }
+        // Start a transaction
+        DB::beginTransaction();
 
-        $lastCode = $latestProduct->code;
-        $number = (int) substr($lastCode, 3) + 1;
-        return 'PRINV-' . str_pad($number, 4, '0', STR_PAD_LEFT);
+        try {
+            // Lock the table to prevent concurrent writes
+            $latestProduct = self::lockForUpdate()->orderBy('id', 'desc')->first();
+
+            if (!$latestProduct) {
+                $newCode = 'PRINV-0001';
+            } else {
+                $lastCode = $latestProduct->code;
+                $number = (int) substr($lastCode, 4) + 1;
+                $newCode = 'PRINV-' . str_pad($number, 4, '0', STR_PAD_LEFT);
+            }
+
+            // Commit the transaction
+            DB::commit();
+
+            return $newCode;
+        } catch (\Exception $e) {
+            // Rollback the transaction if something goes wrong
+            DB::rollBack();
+            throw $e;
+        }
     }
 
     public function supplier()

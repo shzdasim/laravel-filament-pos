@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 
 class Product extends Model
 {
@@ -32,15 +33,33 @@ class Product extends Model
 
     public static function generateCode()
     {
-        $latestProduct = self::orderBy('id', 'desc')->first();
-        if (!$latestProduct) {
-            return 'PRD-0001';
-        }
+        // Start a transaction
+        DB::beginTransaction();
 
-        $lastCode = $latestProduct->code;
-        $number = (int) substr($lastCode, 3) + 1;
-        return 'PRD-' . str_pad($number, 4, '0', STR_PAD_LEFT);
+        try {
+            // Lock the table to prevent concurrent writes
+            $latestProduct = self::lockForUpdate()->orderBy('id', 'desc')->first();
+
+            if (!$latestProduct) {
+                $newCode = 'PRD-0001';
+            } else {
+                $lastCode = $latestProduct->code;
+                $number = (int) substr($lastCode, 4) + 1;
+                $newCode = 'PRD-' . str_pad($number, 4, '0', STR_PAD_LEFT);
+            }
+
+            // Commit the transaction
+            DB::commit();
+
+            return $newCode;
+        } catch (\Exception $e) {
+            // Rollback the transaction if something goes wrong
+            DB::rollBack();
+            throw $e;
+        }
     }
+
+
 
 
     public function category(){

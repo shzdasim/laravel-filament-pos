@@ -4,11 +4,13 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\PurchaseInvoiceResource\Pages;
 use App\Filament\Resources\PurchaseInvoiceResource\RelationManagers;
+use App\Models\Product;
 use App\Models\PurchaseInvoice;
 use Filament\Forms;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Form;
+use Filament\Forms\Get;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -31,6 +33,7 @@ class PurchaseInvoiceResource extends Resource
 
     public static function form(Form $form): Form
     {
+        $products = Product::get();
         return $form
             ->schema([
 
@@ -48,9 +51,12 @@ class PurchaseInvoiceResource extends Resource
                 ])->columns(2),
                 Forms\Components\Section::make()
                 ->schema([
-                    Forms\Components\TextInput::make('supplier_id')
-                    ->required()
-                    ->numeric(),
+                    Forms\Components\Select::make('supplier_id')
+                    ->relationship('supplier', 'name')
+                    ->searchable()
+                    ->native(false)
+                    ->preload()
+                    ->required(),
                     Forms\Components\TextInput::make('invoice_number')
                     ->required()
                     ->maxLength(255),
@@ -64,21 +70,107 @@ class PurchaseInvoiceResource extends Resource
                ->schema([
                 Repeater::make('purchaseInvoiceItems')
                 ->relationship('purchaseInvoiceItems')
+                ->label('Purchase Invoice')
                 ->schema([
-                    // Start Work From here
-                    Forms\Components\TextInput::make('item_id')
-                ]),
+                    // SELECT PRODUCT START
+                    Forms\Components\Select::make('product_id')
+                                    ->relationship(name: 'product', titleAttribute: 'name')
+                                    ->required()
+                                    ->label('SELECT PRODUCT')
+                                    ->native(false)
+                                    ->searchable()
+                                    ->preload()
+                                    ->reactive()
+                                    ->afterStateUpdated(function ($state, callable $set, callable $get){
+                                        if ($state){
+                                            $product = Product::find($state);
+                                            if ($product){
+                                                $set('purchase_price', $product->purchase_price);
+                                                $set('sale_price', $product->sale_price);
+                                                $quantity = $get('quantity') ?? 0;
+                                                $set('sub_total', $product->purchase_price * $quantity);
+                                            }
+                                            else{
+                                                $set('purchase_price', null);
+                                                $set('sale_price', null);
+                                                $set('sub_total', null);
+                                            }
+                                        }
+                                    })
+                                    // Disable options that are already selected in other rows
+                                ->disableOptionWhen(function ($value, $state, Get $get) {
+                                    return collect($get('../*.product_id'))
+                                        ->reject(fn($id) => $id == $state)
+                                        ->filter()
+                                        ->contains($value);
+                                })
+                                ->columnSpan(3),
+                    // SELECT PRODUCT END
+                    // Quantity START
+                    Forms\Components\TextInput::make('quantity')
+                    ->required()
+                    ->reactive()
+                    ->numeric()
+                    ->afterStateUpdated(function ($state, callable $set, callable $get){
+                        $productId = $get('product_id');
+                        $product = Product::find($productId);
+                        $purchase_price = $get('purchase_price') ?? 0;
+                        $quantity = $state ?? 0;
+                        $sub_total = $purchase_price * $quantity;
+                        $set('sub_total', $sub_total);
+                    })
+                    ,
+                    // Quantity END
+                    //Start purchase_price
+                    Forms\Components\TextInput::make('purchase_price')
+                    ->label('Pur. Price')
+                    ->required()
+                    ->reactive()
+                    ->numeric()
+                    ->afterStateUpdated(function($state, callable $set, callable $get){
+                        $productId = $get('product_id');
+                        $product = Product::find($productId);
+                        $purchase_price = $state ?? 0;
+                        $quantity = $get('quantity') ?? 0;
+                        $sub_total = $purchase_price * $quantity;
+                        $set('sub_total', $sub_total);
+                    })
+                    ,
+                    //End purchase_price
+                    // START sale_price
+                    Forms\Components\TextInput::make('sale_price')
+                    ->required()
+                    ->numeric(),
+                    // END sale_price
+                    // START discount
+                    Forms\Components\TextInput::make('discount')
+                    ->label('disc%')
+                    ->required()
+                    ->numeric(),
+                    // END discount
+                    // START subtotal
+                    Forms\Components\TextInput::make('sub_total')
+                    ->required()
+                    ->readOnly()
+                    ->numeric(),
+                    // END subtotal
+                ])->columns(8),
                ]),
                 
                 
-                Forms\Components\TextInput::make('tax')
-                    ->numeric(),
-                Forms\Components\TextInput::make('discount')
-                    ->numeric(),
-                Forms\Components\TextInput::make('total_amount')
-                    ->required()
-                    ->numeric(),
-            ]);
+                // START SECTION TAX, DISCOUNT, TOTAL
+                Forms\Components\Section::make('Tax, Discount, Total')
+                ->schema([
+                    Forms\Components\TextInput::make('tax')
+                        ->numeric(),
+                    Forms\Components\TextInput::make('discount')
+                        ->numeric(),
+                    Forms\Components\TextInput::make('total_amount')
+                        ->required()
+                        ->numeric()
+                        ->readOnly(),
+                ])->columns(3),
+            ]) ->extraAttributes(['onkeydown' => 'return event.key != "Enter";']); // Prevent Enter key from submitting the form;
     }
 
     public static function table(Table $table): Table
