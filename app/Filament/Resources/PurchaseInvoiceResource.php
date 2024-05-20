@@ -115,9 +115,12 @@ class PurchaseInvoiceResource extends Resource
                         $productId = $get('product_id');
                         $product = Product::find($productId);
                         $purchase_price = $get('purchase_price') ?? 0;
+                        $discount_percentage = $get('discount') ?? 0;
                         $quantity = $state ?? 0;
                         $sub_total = $purchase_price * $quantity;
-                        $set('sub_total', $sub_total);
+                        $discount_amount = ($sub_total * $discount_percentage) / 100;
+                        $sub_total_with_discount = $sub_total - $discount_amount;
+                        $set('sub_total', $sub_total_with_discount);
                     })
                     ,
                     // Quantity END
@@ -132,8 +135,11 @@ class PurchaseInvoiceResource extends Resource
                         $product = Product::find($productId);
                         $purchase_price = $state ?? 0;
                         $quantity = $get('quantity') ?? 0;
+                        $discount_percentage = $get('discount') ?? 0;
                         $sub_total = $purchase_price * $quantity;
-                        $set('sub_total', $sub_total);
+                        $discount_amount = ($sub_total * $discount_percentage) / 100;
+                        $sub_total_with_discount = $sub_total - $discount_amount;
+                        $set('sub_total', $sub_total_with_discount);
                     })
                     ,
                     //End purchase_price
@@ -146,7 +152,19 @@ class PurchaseInvoiceResource extends Resource
                     Forms\Components\TextInput::make('discount')
                     ->label('disc%')
                     ->required()
-                    ->numeric(),
+                    ->reactive()
+                    ->numeric()
+                    ->afterStateUpdated(function($state, callable $set, callable $get){
+                        $productId = $get('product_id');
+                        $product = Product::find($productId);
+                        $discount_percentage = $state ?? 0;
+                        $purchase_price = $get('purchase_price') ?? 0;
+                        $quantity = $get('quantity') ?? 0;
+                        $sub_total = $purchase_price * $quantity;
+                        $discount_amount = ($sub_total * $discount_percentage) / 100;
+                        $sub_total_with_discount = $sub_total - $discount_amount;
+                        $set('sub_total', $sub_total_with_discount);
+                    }),
                     // END discount
                     // START subtotal
                     Forms\Components\TextInput::make('sub_total')
