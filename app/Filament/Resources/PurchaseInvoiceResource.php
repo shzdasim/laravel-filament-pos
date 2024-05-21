@@ -65,12 +65,12 @@ class PurchaseInvoiceResource extends Resource
                             ->numeric()
                             // Rule to See Difference Between Invoice_amount and Total_amount
                             ->rules([
-                                fn(Get $get): Closure => function (string $attribute, $value, Closure $fail) use ($get){
+                                fn(Get $get): Closure => function (string $attribute, $value, Closure $fail) use ($get) {
                                     $invoice_amount = $get('invoice_amount');
                                     $total_amount = $get('total_amount');
-                                    if ($invoice_amount > $total_amount) {
-                                        $fail('Invoice amount must be less than or equal to total amount.');
-                                        }
+                                    if (abs($invoice_amount - $total_amount) > 5) {
+                                        $fail('Invoice amount must not differ from the total amount by more than 5.');
+                                    }
                                 }
                             ])
                     ])->columns(3),
@@ -249,26 +249,33 @@ class PurchaseInvoiceResource extends Resource
         {
             return $table
                 ->columns([
-                    Tables\Columns\TextColumn::make('supplier_id')
+                    Tables\Columns\TextColumn::make('supplier.name')
                         ->numeric()
                         ->sortable(),
                     Tables\Columns\TextColumn::make('posted_number')
+                    ->label('P.NO')
                         ->searchable(),
                     Tables\Columns\TextColumn::make('posted_date')
+                    ->label('Date')
                         ->date()
                         ->sortable(),
                     Tables\Columns\TextColumn::make('invoice_number')
+                        ->label('INV.NO')
                         ->searchable(),
                     Tables\Columns\TextColumn::make('invoice_amount')
+                        ->label('INV.AMNT')
                         ->numeric()
                         ->sortable(),
                     Tables\Columns\TextColumn::make('tax')
+                        ->label('Tax%')
                         ->numeric()
                         ->sortable(),
                     Tables\Columns\TextColumn::make('discount')
+                        ->label('DISC.%')
                         ->numeric()
                         ->sortable(),
                     Tables\Columns\TextColumn::make('total_amount')
+                        ->label('Total')
                         ->numeric()
                         ->sortable(),
                     Tables\Columns\TextColumn::make('created_at')
