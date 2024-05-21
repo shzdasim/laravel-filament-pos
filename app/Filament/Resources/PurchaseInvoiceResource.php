@@ -205,7 +205,7 @@ class PurchaseInvoiceResource extends Resource
                                     }),
                             ])->columns(8)
                             ->reactive(),
-                    ]),
+                                ]),
                 Forms\Components\Section::make('Tax, Discount, Total')
                     ->schema([
                         Forms\Components\TextInput::make('tax')
@@ -244,8 +244,6 @@ class PurchaseInvoiceResource extends Resource
                     ])->columns(3),
             ])->extraAttributes(['onkeydown' => 'return event.key != "Enter";']);
         }
-
-
 
         public static function table(Table $table): Table
         {

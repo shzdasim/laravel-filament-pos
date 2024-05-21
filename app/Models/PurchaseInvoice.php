@@ -19,33 +19,36 @@ class PurchaseInvoice extends Model
         parent::boot();
 
         static::creating(function ($model) {
-            $model->posted_number = self::generateCode();
+            if (empty($model->posted_number)) {
+                $model->posted_number = self::generateCode();
+            }
+        });
+        static::deleting(function ($invoice) {
+            foreach ($invoice->purchaseInvoiceItems as $item) {
+                $item->delete();
+            }
         });
     }
 
     public static function generateCode()
     {
-        // Start a transaction
         DB::beginTransaction();
 
         try {
-            // Lock the table to prevent concurrent writes
-            $latestProduct = self::lockForUpdate()->orderBy('id', 'desc')->first();
+            $lastestPurchaseInvoice = self::lockForUpdate()->orderBy('id', 'desc')->first();
 
-            if (!$latestProduct) {
+            if (!$lastestPurchaseInvoice) {
                 $newCode = 'PRINV-0001';
             } else {
-                $lastCode = $latestProduct->posted_number;
-                $number = (int) substr($lastCode, 4) + 1;
+                $lastCode = $lastestPurchaseInvoice->posted_number;
+                $number = (int) substr($lastCode, 6) + 1;
                 $newCode = 'PRINV-' . str_pad($number, 4, '0', STR_PAD_LEFT);
             }
 
-            // Commit the transaction
             DB::commit();
 
             return $newCode;
         } catch (\Exception $e) {
-            // Rollback the transaction if something goes wrong
             DB::rollBack();
             throw $e;
         }
