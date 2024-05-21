@@ -25,9 +25,9 @@ class PurchaseInvoiceResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
     public static function getNavigationBadge(): ?string
-        {
-            return static::getModel()::count();
-        }
+    {
+        return static::getModel()::count();
+    }
     protected static ?string $navigationLabel = 'PURCHASE INVOICES';
     protected static ?string $navigationGroup = 'INVOICES';
     protected static ?string $modelLabel = 'Purchase Invoice';
@@ -63,7 +63,6 @@ class PurchaseInvoiceResource extends Resource
                         Forms\Components\TextInput::make('invoice_amount')
                             ->required()
                             ->numeric()
-                            // Rule to See Difference Between Invoice_amount and Total_amount
                             ->rules([
                                 fn(Get $get): Closure => function (string $attribute, $value, Closure $fail) use ($get) {
                                     $invoice_amount = $get('invoice_amount');
@@ -205,7 +204,7 @@ class PurchaseInvoiceResource extends Resource
                                     }),
                             ])->columns(8)
                             ->reactive(),
-                                ]),
+                    ]),
                 Forms\Components\Section::make('Tax, Discount, Total')
                     ->schema([
                         Forms\Components\TextInput::make('tax')
@@ -243,78 +242,78 @@ class PurchaseInvoiceResource extends Resource
                             ->readOnly(),
                     ])->columns(3),
             ])->extraAttributes(['onkeydown' => 'return event.key != "Enter";']);
-        }
-
-        public static function table(Table $table): Table
-        {
-            return $table
-                ->columns([
-                    Tables\Columns\TextColumn::make('supplier.name')
-                        ->numeric()
-                        ->sortable(),
-                    Tables\Columns\TextColumn::make('posted_number')
-                    ->label('P.NO')
-                        ->searchable(),
-                    Tables\Columns\TextColumn::make('posted_date')
-                    ->label('Date')
-                        ->date()
-                        ->sortable(),
-                    Tables\Columns\TextColumn::make('invoice_number')
-                        ->label('INV.NO')
-                        ->searchable(),
-                    Tables\Columns\TextColumn::make('invoice_amount')
-                        ->label('INV.AMNT')
-                        ->numeric()
-                        ->sortable(),
-                    Tables\Columns\TextColumn::make('tax')
-                        ->label('Tax%')
-                        ->numeric()
-                        ->sortable(),
-                    Tables\Columns\TextColumn::make('discount')
-                        ->label('DISC.%')
-                        ->numeric()
-                        ->sortable(),
-                    Tables\Columns\TextColumn::make('total_amount')
-                        ->label('Total')
-                        ->numeric()
-                        ->sortable(),
-                    Tables\Columns\TextColumn::make('created_at')
-                        ->dateTime()
-                        ->sortable()
-                        ->toggleable(isToggledHiddenByDefault: true),
-                    Tables\Columns\TextColumn::make('updated_at')
-                        ->dateTime()
-                        ->sortable()
-                        ->toggleable(isToggledHiddenByDefault: true),
-                ])
-                ->filters([
-                    //
-                ])
-                ->actions([
-                    Tables\Actions\ViewAction::make(),
-                    Tables\Actions\EditAction::make(),
-                ])
-                ->bulkActions([
-                    Tables\Actions\BulkActionGroup::make([
-                        Tables\Actions\DeleteBulkAction::make(),
-                    ]),
-                ]);
-        }
-
-        public static function getRelations(): array
-        {
-            return [
-                //
-            ];
-        }
-
-        public static function getPages(): array
-        {
-            return [
-                'index' => Pages\ListPurchaseInvoices::route('/'),
-                'create' => Pages\CreatePurchaseInvoice::route('/create'),
-                'view' => Pages\ViewPurchaseInvoice::route('/{record}'),
-                'edit' => Pages\EditPurchaseInvoice::route('/{record}/edit'),
-            ];
-        }
     }
+
+    public static function table(Table $table): Table
+    {
+        return $table
+            ->columns([
+                Tables\Columns\TextColumn::make('supplier.name')
+                    ->numeric()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('posted_number')
+                    ->label('P.NO')
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('posted_date')
+                    ->label('Date')
+                    ->date()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('invoice_number')
+                    ->label('INV.NO')
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('invoice_amount')
+                    ->label('INV.AMNT')
+                    ->numeric()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('tax')
+                    ->label('Tax%')
+                    ->numeric()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('discount')
+                    ->label('DISC.%')
+                    ->numeric()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('total_amount')
+                    ->label('Total')
+                    ->numeric()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('created_at')
+                    ->dateTime()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('updated_at')
+                    ->dateTime()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+            ])
+            ->filters([
+                //
+            ])
+            ->actions([
+                Tables\Actions\ViewAction::make(),
+                Tables\Actions\EditAction::make(),
+            ])
+            ->bulkActions([
+                Tables\Actions\BulkActionGroup::make([
+                    Tables\Actions\DeleteBulkAction::make(),
+                ]),
+            ]);
+    }
+
+    public static function getRelations(): array
+    {
+        return [
+            //
+        ];
+    }
+
+    public static function getPages(): array
+    {
+        return [
+            'index' => Pages\ListPurchaseInvoices::route('/'),
+            'create' => Pages\CreatePurchaseInvoice::route('/create'),
+            'view' => Pages\ViewPurchaseInvoice::route('/{record}'),
+            'edit' => Pages\EditPurchaseInvoice::route('/{record}/edit'),
+        ];
+    }
+}
