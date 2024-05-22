@@ -87,23 +87,25 @@ class ProductResource extends Resource
                     Tables\Columns\TextColumn::make('category.name')
                     ->numeric()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('description')
-                    ->searchable(),
                 Tables\Columns\TextColumn::make('quantity')
                     ->numeric()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('purchase_price')
+                    ->label('P.Price')
                     ->numeric()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('sale_price')
+                ->label('S.Price')
                     ->numeric()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('avg_price')
                     ->numeric()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('max_discount')
+                    ->label('Max.Disc%')
                     ->numeric()
-                    ->sortable(),
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
