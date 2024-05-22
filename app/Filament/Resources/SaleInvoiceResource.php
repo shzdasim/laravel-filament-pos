@@ -6,12 +6,16 @@ use App\Filament\Resources\SaleInvoiceResource\Pages;
 use App\Models\Customer;
 use App\Models\Product;
 use App\Models\SaleInvoice;
+use Closure;
+use Dotenv\Exception\ValidationException;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Forms\Get;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Validation\Rule;
+use Filament\Notifications\Notification as FilamentNotification;
 
 class SaleInvoiceResource extends Resource
 {
@@ -99,9 +103,6 @@ class SaleInvoiceResource extends Resource
                                     ->reactive()
                                     ->afterStateUpdated(function ($state, callable $set, callable $get) {
                                         $current_quantity = $get('current_quantity') ?? 0;
-                                        if ($state > $current_quantity) {
-                                            $set('quantity', $current_quantity);
-                                        }
                                         $price = $get('price') ?? 0;
                                         $discount = $get('discount') ?? 0;
                                         $quantity = $state ?? 0;
@@ -119,7 +120,15 @@ class SaleInvoiceResource extends Resource
                                         $total_with_discount = $total_amount - ($total_amount * $overall_discount / 100);
                                         $total_with_tax = $total_with_discount + ($total_with_discount * $tax / 100);
                                         $set('../../total_amount', $total_with_tax);
-                                    }),
+                                    })
+                                    ->rules([
+                                        fn(Get $get): Closure => function (string $attribute, $value, Closure $fail) use ($get) {
+                                            $current_quantity = $get('current_quantity') ?? 0;
+                                            if ($value > $current_quantity) {
+                                                $fail('The quantity cannot exceed the available stock.');
+                                            }
+                                        }
+                                    ]),
                                 Forms\Components\TextInput::make('price')
                                     ->required()
                                     ->numeric()
@@ -161,7 +170,7 @@ class SaleInvoiceResource extends Resource
                             ->label('Tax%')
                             ->numeric()
                             ->reactive()
-                            ->afterStateUpdated(function ($state, callable $set, callable $get) {
+                            ->afterStateUpdated(function($state, callable $set, callable $get) {
                                 $tax = $state ?? 0;
                                 $original_total_amount = $get('original_total_amount') ?? 0;
                                 $overall_discount = $get('discount') ?? 0;
@@ -173,7 +182,7 @@ class SaleInvoiceResource extends Resource
                             ->label('Discount %')
                             ->numeric()
                             ->reactive()
-                            ->afterStateUpdated(function ($state, callable $set, callable $get) {
+                            ->afterStateUpdated(function($state, callable $set, callable $get) {
                                 $discount = $state ?? 0;
                                 $original_total_amount = $get('original_total_amount') ?? 0;
                                 $total_with_discount = $original_total_amount - ($original_total_amount * $discount / 100);
