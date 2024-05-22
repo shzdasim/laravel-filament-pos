@@ -1,15 +1,15 @@
 <?php
 
-namespace App\Filament\Resources\PurchaseInvoiceResource\Pages;
+namespace App\Filament\Resources\SaleInvoiceResource\Pages;
 
-use App\Filament\Resources\PurchaseInvoiceResource;
+use App\Filament\Resources\SaleInvoiceResource;
 use Filament\Actions;
 use Filament\Actions\Action;
 use Filament\Resources\Pages\CreateRecord;
 
-class CreatePurchaseInvoice extends CreateRecord
+class CreateSaleInvoice extends CreateRecord
 {
-    protected static string $resource = PurchaseInvoiceResource::class;
+    protected static string $resource = SaleInvoiceResource::class;
     protected function getRedirectUrl(): string
     {
         return $this->getResource()::getUrl('index');
@@ -20,7 +20,7 @@ class CreatePurchaseInvoice extends CreateRecord
         // Removing the "Create & Create Another" button by not including it
         return [
             Action::make('create')
-                ->label('Create Purchase Invoice')
+                ->label('Create Sale Invoice')
                 ->submit('store'),
                 
             Action::make('cancel')
