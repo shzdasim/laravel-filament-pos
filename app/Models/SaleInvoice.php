@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\DB;
 
 class SaleInvoice extends Model
@@ -21,6 +22,16 @@ class SaleInvoice extends Model
     }
     public function saleInvoiceItems(){
         return $this->hasMany(SaleInvoiceItem::class);
+    }
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::deleting(function ($saleInvoice) {
+            $saleInvoice->saleInvoiceItems()->each(function ($item) {
+                $item->delete();
+            });
+        });
     }
 
     public static function generateCode()
