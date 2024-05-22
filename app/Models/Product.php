@@ -2,9 +2,11 @@
 
 namespace App\Models;
 
+use App\Exceptions\ProductDeletionException;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class Product extends Model
 {
@@ -28,6 +30,12 @@ class Product extends Model
 
         static::creating(function ($model) {
             $model->code = self::generateCode();
+        });
+
+        static::deleting(function ($model) {
+            if ($model->quantity > 0) {
+                throw new ProductDeletionException();
+            }
         });
     }
 
