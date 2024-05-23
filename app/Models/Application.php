@@ -18,11 +18,13 @@ class Application extends Model
     {
         return $this->logo ? Storage::url($this->logo) : null;
     }
+
     public static function getFirstLogoUrl()
     {
         $application = self::first();
         return $application ? $application->logo_url : null;
     }
+
     public static function getFirstName()
     {
         $application = self::first();

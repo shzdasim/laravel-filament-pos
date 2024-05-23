@@ -15,9 +15,9 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->string('logo')->nullable();
-            $table->string('description')->nullable();
             $table->string('licence_number')->nullable();
-            $table->string('instructions')->nullable();
+            $table->text('description')->nullable();
+            $table->text('instructions')->nullable();
             $table->timestamps();
         });
     }
