@@ -7,15 +7,12 @@ use App\Models\Customer;
 use App\Models\Product;
 use App\Models\SaleInvoice;
 use Closure;
-use Dotenv\Exception\ValidationException;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Forms\Get;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Validation\Rule;
-use Filament\Notifications\Notification as FilamentNotification;
 
 class SaleInvoiceResource extends Resource
 {
@@ -119,7 +116,7 @@ class SaleInvoiceResource extends Resource
                                         $tax = $get('../../tax') ?? 0;
                                         $total_with_discount = $total_amount - ($total_amount * $overall_discount / 100);
                                         $total_with_tax = $total_with_discount + ($total_with_discount * $tax / 100);
-                                        $set('../../total_amount', $total_with_tax);
+                                        $set('../../total', $total_with_tax);
                                     })
                                     ->rules([
                                         fn(Get $get): Closure => function (string $attribute, $value, Closure $fail) use ($get) {
@@ -155,7 +152,7 @@ class SaleInvoiceResource extends Resource
                                         $tax = $get('../../tax') ?? 0;
                                         $total_with_discount = $total_amount - ($total_amount * $overall_discount / 100);
                                         $total_with_tax = $total_with_discount + ($total_with_discount * $tax / 100);
-                                        $set('../../total_amount', $total_with_tax);
+                                        $set('../../total', $total_with_tax);
                                     }),
                                 Forms\Components\TextInput::make('sub_total')
                                     ->required()
@@ -176,7 +173,7 @@ class SaleInvoiceResource extends Resource
                                 $overall_discount = $get('discount') ?? 0;
                                 $total_with_discount = $original_total_amount - ($original_total_amount * $overall_discount / 100);
                                 $total_with_tax = $total_with_discount + ($total_with_discount * $tax / 100);
-                                $set('total_amount', $total_with_tax);
+                                $set('total', $total_with_tax);
                             }),
                         Forms\Components\TextInput::make('discount')
                             ->label('Discount %')
@@ -188,13 +185,13 @@ class SaleInvoiceResource extends Resource
                                 $total_with_discount = $original_total_amount - ($original_total_amount * $discount / 100);
                                 $tax = $get('tax') ?? 0;
                                 $total_with_tax = $total_with_discount + ($total_with_discount * $tax / 100);
-                                $set('total_amount', $total_with_tax);
+                                $set('total', $total_with_tax);
                             }),
                         Forms\Components\TextInput::make('original_total_amount')
                             ->numeric()
                             ->reactive()
                             ->hidden(),
-                        Forms\Components\TextInput::make('total_amount')
+                        Forms\Components\TextInput::make('total')
                             ->required()
                             ->numeric()
                             ->reactive()

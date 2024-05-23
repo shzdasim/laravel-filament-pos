@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\SaleInvoiceResource\Pages;
 
 use App\Filament\Resources\SaleInvoiceResource;
+use App\Filament\Widgets\TotalSalesWidget;
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
 
