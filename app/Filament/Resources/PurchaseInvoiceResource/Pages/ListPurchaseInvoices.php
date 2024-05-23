@@ -13,7 +13,8 @@ class ListPurchaseInvoices extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            Actions\CreateAction::make(),
+            Actions\CreateAction::make()
+            ->keyBindings(['option+n', 'alt+n']),
         ];
     }
 }

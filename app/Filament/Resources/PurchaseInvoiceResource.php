@@ -12,6 +12,7 @@ use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Form;
 use Filament\Forms\Get;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -68,7 +69,11 @@ class PurchaseInvoiceResource extends Resource
                                     $invoice_amount = $get('invoice_amount');
                                     $total_amount = $get('total_amount');
                                     if (abs($invoice_amount - $total_amount) > 5) {
-                                        $fail('Invoice amount must not differ from the total amount by more than 5.');
+                                        Notification::make()
+                                        ->title('Invoice Amount Error ')
+                                        ->body($fail('Invoice amount must not differ from the total amount by more than 5.'))
+                                        ->danger()
+                                        ->send();
                                     }
                                 }
                             ])
@@ -202,7 +207,8 @@ class PurchaseInvoiceResource extends Resource
                                         $total_with_tax = $total_with_discount + ($total_with_discount * $tax_percentage / 100);
                                         $set('../../total_amount', $total_with_tax);
                                     }),
-                            ])->columns(8)
+                            ])
+                            ->columns(8)
                             ->reactive(),
                     ]),
                 Forms\Components\Section::make('Tax, Discount, Total')

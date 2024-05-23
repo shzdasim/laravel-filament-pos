@@ -14,7 +14,8 @@ class EditPurchaseInvoice extends EditRecord
     {
         return [
             Actions\ViewAction::make(),
-            Actions\DeleteAction::make(),
+            Actions\DeleteAction::make()
+            ->keyBindings(['option+d', 'alt+d']),
         ];
     }
 }
