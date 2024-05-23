@@ -13,7 +13,8 @@ class ViewPurchaseInvoice extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
-            Actions\EditAction::make(),
+            Actions\EditAction::make()
+            ->keyBindings(['option+e', 'alt+e']),
         ];
     }
 }
