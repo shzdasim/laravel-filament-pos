@@ -7,6 +7,7 @@ use App\Models\Customer;
 use App\Models\Product;
 use App\Models\SaleInvoice;
 use Closure;
+use Filament\Forms\Components\Actions\Action;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Forms\Get;
@@ -159,7 +160,10 @@ class SaleInvoiceResource extends Resource
                                     ->numeric()
                                     ->readOnly(),
                             ])->columns(8)
-                            ->reactive(),
+                            ->reactive()
+                            ->addAction(
+                                fn (Action $action) => $action->keybindings('option+n'), // Add keybinding method to repeater add action
+                            ),
                     ]),
                 Forms\Components\Section::make('Tax, Discount, Total')
                     ->schema([
