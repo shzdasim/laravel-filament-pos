@@ -6,6 +6,7 @@ use App\Filament\Resources\PurchaseInvoiceResource\Pages;
 use App\Filament\Resources\PurchaseInvoiceResource\RelationManagers;
 use App\Models\Product;
 use App\Models\PurchaseInvoice;
+use App\Models\User;
 use Closure;
 use Filament\Forms;
 use Filament\Forms\Components\Repeater;
@@ -297,12 +298,14 @@ class PurchaseInvoiceResource extends Resource
             ])
             ->actions([
                 Tables\Actions\ViewAction::make(),
-                Tables\Actions\EditAction::make(),
+                Tables\Actions\EditAction::make()->visible(fn (User $user, $record) => $user->can('delete', $record)),
             ])
+            //->visible(fn (User $user, $record) => $user->can('delete', $record)),
+            // ONLY ADMIN CAN DELETE PURCHASE INVOICE
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
-                ]),
+                ])->visible(fn (User $user, $record) => $user->can('delete', $record)),
             ]);
     }
 

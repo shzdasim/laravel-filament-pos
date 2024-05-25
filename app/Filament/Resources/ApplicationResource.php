@@ -3,6 +3,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\ApplicationResource\Pages;
 use App\Models\Application;
+use App\Models\User;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -15,11 +16,10 @@ use Illuminate\Support\Facades\Storage;
 class ApplicationResource extends Resource
 {
     protected static ?string $model = Application::class;
-
+    protected static bool $authorizeResourcesAccess = true;
     protected static ?string $navigationIcon = 'heroicon-o-cog-8-tooth';
     protected static ?string $navigationLabel = 'APPLICATION SETUP';
     protected static ?string $modelLabel = 'Application';
-
     public static function form(Form $form): Form
     {
         return $form
@@ -62,7 +62,7 @@ class ApplicationResource extends Resource
             ])
             ->actions([
                 Tables\Actions\ViewAction::make(),
-                Tables\Actions\EditAction::make(),
+                Tables\Actions\EditAction::make(), //->visible(fn (User $user, $record) => $user->can('delete', $record)),
             ]);
     }
 
