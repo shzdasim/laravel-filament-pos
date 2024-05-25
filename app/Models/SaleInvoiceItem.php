@@ -28,7 +28,6 @@ class SaleInvoiceItem extends Model
         parent::boot();
     
         static::created(function ($item) {
-            Log::info('SaleInvoiceItem Created event triggered for item id: ' . $item->id);
             $product = $item->product;
             $product->quantity -= $item->quantity;
             $product->save();
@@ -42,7 +41,6 @@ class SaleInvoiceItem extends Model
         });
     
         static::deleting(function ($item) {
-            Log::info('SaleInvoiceItem deleting event triggered for item id: ' . $item->id);
             $product = $item->product;
             $product->quantity += $item->quantity;
             $product->save();
