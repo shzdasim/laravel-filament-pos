@@ -6,6 +6,7 @@ use App\Filament\Resources\SaleInvoiceResource\Pages;
 use App\Models\Customer;
 use App\Models\Product;
 use App\Models\SaleInvoice;
+use App\Models\User;
 use Closure;
 use Filament\Forms\Components\Actions\Action;
 use Filament\Forms;
@@ -248,7 +249,7 @@ class SaleInvoiceResource extends Resource
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
-                ]),
+                ])->visible(fn (User $user, $record) => $user->can('delete', $record)),
             ]);
     }
 

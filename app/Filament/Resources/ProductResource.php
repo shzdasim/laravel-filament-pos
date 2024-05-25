@@ -6,6 +6,7 @@ use App\Exceptions\ProductDeletionException;
 use App\Filament\Resources\ProductResource\Pages;
 use App\Filament\Resources\ProductResource\RelationManagers;
 use App\Models\Product;
+use App\Models\User;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -141,7 +142,8 @@ class ProductResource extends Resource
                             }
                         }
                     }),
-                ]),
+                ])
+                ->visible(fn (User $user, $record) => $user->can('delete', $record)),
             ]);
     }
 

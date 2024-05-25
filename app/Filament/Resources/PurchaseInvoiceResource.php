@@ -298,7 +298,7 @@ class PurchaseInvoiceResource extends Resource
             ])
             ->actions([
                 Tables\Actions\ViewAction::make(),
-                Tables\Actions\EditAction::make()->visible(fn (User $user, $record) => $user->can('delete', $record)),
+                Tables\Actions\EditAction::make(),
             ])
             //->visible(fn (User $user, $record) => $user->can('delete', $record)),
             // ONLY ADMIN CAN DELETE PURCHASE INVOICE
