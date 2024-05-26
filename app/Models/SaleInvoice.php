@@ -11,7 +11,7 @@ class SaleInvoice extends Model
 {
     use HasFactory;
     protected $fillable = [
-      'user_id', 'customer_id', 'date', 'posted_number', 'discount', 'tax', 'total'
+        'user_id', 'customer_id', 'date', 'posted_number', 'discount', 'tax', 'total', 'gross_amount', 'item_discount', 'discount_amount', 'tax_amount'
     ];
     protected $guarded = ['saleInvoiceItems'];
     public function user(){
@@ -57,4 +57,5 @@ class SaleInvoice extends Model
             throw $e;
         }
     }
+
 }

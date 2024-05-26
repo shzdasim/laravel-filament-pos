@@ -10,6 +10,7 @@ use App\Models\User;
 use Closure;
 use Filament\Forms\Components\Actions\Action;
 use Filament\Forms;
+use Filament\Forms\Components\Section;
 use Filament\Forms\Form;
 use Filament\Forms\Get;
 use Filament\Resources\Resource;
@@ -110,8 +111,17 @@ class SaleInvoiceResource extends Resource
                                         $sub_total_with_discount = $sub_total - $discount_amount;
                                         $set('sub_total', $sub_total_with_discount);
 
+                                        // Calculate gross amount and item discount
+                                        $gross_amount = collect($get('../../saleInvoiceItems'))
+                                            ->sum(fn($item) => ($item['price'] ?? 0) * ($item['quantity'] ?? 0));
+                                        $item_discount = collect($get('../../saleInvoiceItems'))
+                                            ->sum(fn($item) => (($item['price'] ?? 0) * ($item['quantity'] ?? 0) * ($item['discount'] ?? 0)) / 100);
+
                                         $total_amount = collect($get('../../saleInvoiceItems'))
                                             ->sum(fn($item) => $item['sub_total'] ?? 0);
+
+                                        $set('../../gross_amount', $gross_amount);
+                                        $set('../../item_discount', $item_discount);
                                         $set('../../original_total_amount', $total_amount);
 
                                         $overall_discount = $get('../../discount') ?? 0;
@@ -146,8 +156,17 @@ class SaleInvoiceResource extends Resource
                                         $sub_total_with_discount = $sub_total - $discount_amount;
                                         $set('sub_total', $sub_total_with_discount);
 
+                                        // Calculate gross amount and item discount
+                                        $gross_amount = collect($get('../../saleInvoiceItems'))
+                                            ->sum(fn($item) => ($item['price'] ?? 0) * ($item['quantity'] ?? 0));
+                                        $item_discount = collect($get('../../saleInvoiceItems'))
+                                            ->sum(fn($item) => (($item['price'] ?? 0) * ($item['quantity'] ?? 0) * ($item['discount'] ?? 0)) / 100);
+
                                         $total_amount = collect($get('../../saleInvoiceItems'))
                                             ->sum(fn($item) => $item['sub_total'] ?? 0);
+
+                                        $set('../../gross_amount', $gross_amount);
+                                        $set('../../item_discount', $item_discount);
                                         $set('../../original_total_amount', $total_amount);
 
                                         $overall_discount = $get('../../discount') ?? 0;
@@ -166,42 +185,97 @@ class SaleInvoiceResource extends Resource
                                 fn (Action $action) => $action->keybindings('option+n'), // Add keybinding method to repeater add action
                             ),
                     ]),
-                Forms\Components\Section::make('Tax, Discount, Total')
+                    Section::make()
                     ->schema([
-                        Forms\Components\TextInput::make('tax')
-                            ->label('Tax%')
-                            ->numeric()
-                            ->reactive()
-                            ->afterStateUpdated(function($state, callable $set, callable $get) {
-                                $tax = $state ?? 0;
-                                $original_total_amount = $get('original_total_amount') ?? 0;
-                                $overall_discount = $get('discount') ?? 0;
-                                $total_with_discount = $original_total_amount - ($original_total_amount * $overall_discount / 100);
-                                $total_with_tax = $total_with_discount + ($total_with_discount * $tax / 100);
-                                $set('total', $total_with_tax);
-                            }),
-                        Forms\Components\TextInput::make('discount')
-                            ->label('Discount %')
-                            ->numeric()
-                            ->reactive()
-                            ->afterStateUpdated(function($state, callable $set, callable $get) {
-                                $discount = $state ?? 0;
-                                $original_total_amount = $get('original_total_amount') ?? 0;
-                                $total_with_discount = $original_total_amount - ($original_total_amount * $discount / 100);
-                                $tax = $get('tax') ?? 0;
-                                $total_with_tax = $total_with_discount + ($total_with_discount * $tax / 100);
-                                $set('total', $total_with_tax);
-                            }),
-                        Forms\Components\TextInput::make('original_total_amount')
-                            ->numeric()
-                            ->reactive()
-                            ->hidden(),
-                        Forms\Components\TextInput::make('total')
-                            ->required()
-                            ->numeric()
-                            ->reactive()
-                            ->readOnly(),
-                    ])->columns(3),
+                        Forms\Components\Section::make('Tax, Discount')
+                            ->schema([
+                                Forms\Components\TextInput::make('discount')
+                                    ->label('Discount %')
+                                    ->numeric()
+                                    ->reactive()
+                                    ->afterStateUpdated(function ($state, callable $set, callable $get) {
+                                        $discount = $state ?? 0;
+                                        $original_total_amount = collect($get('saleInvoiceItems'))
+                                            ->sum(fn($item) => $item['sub_total'] ?? 0);
+                                        $discount_amount = ($original_total_amount * $discount) / 100;
+                                        $set('discount_amount', $discount_amount);
+                                    
+                                        $tax = $get('tax') ?? 0;
+                                        $total_with_discount = $original_total_amount - $discount_amount;
+                                        $total_with_tax = $total_with_discount + ($total_with_discount * $tax / 100);
+                                        $set('total', $total_with_tax);
+                                    }),
+                                Forms\Components\TextInput::make('discount_amount')
+                                    ->label('Discount Amount')
+                                    ->numeric()
+                                    ->reactive()
+                                    ->afterStateUpdated(function ($state, callable $set, callable $get) {
+                                        $discount_amount = $state ?? 0;
+                                        $original_total_amount = collect($get('saleInvoiceItems'))
+                                        ->sum(fn($item) => $item['sub_total'] ?? 0);
+                                        $discount_percentage = ($original_total_amount > 0) ? ($discount_amount / $original_total_amount) * 100 : 0;
+                                        $set('discount', $discount_percentage);
+
+                                        $tax = $get('tax') ?? 0;
+                                        $total_with_discount = $original_total_amount - $discount_amount;
+                                        $total_with_tax = $total_with_discount + ($total_with_discount * $tax / 100);
+                                        $set('total', $total_with_tax);
+                                    }),
+                                Forms\Components\TextInput::make('tax')
+                                    ->label('Tax %')
+                                    ->numeric()
+                                    ->reactive()
+                                    ->afterStateUpdated(function ($state, callable $set, callable $get) {
+                                        $tax = $state ?? 0;
+                                        $original_total_amount = collect($get('saleInvoiceItems'))
+                                        ->sum(fn($item) => $item['sub_total'] ?? 0);
+                                        $total_with_discount = $original_total_amount - ($original_total_amount * ($get('discount') ?? 0) / 100);
+                                        $tax_amount = ($total_with_discount * $tax) / 100;
+                                        $set('tax_amount', $tax_amount);
+
+                                        $total_with_tax = $total_with_discount + $tax_amount;
+                                        $set('total', $total_with_tax);
+                                    }),
+                                    Forms\Components\TextInput::make('tax_amount')
+                                    ->label('Tax Amount')
+                                    ->numeric()
+                                    ->reactive()
+                                    ->afterStateUpdated(function ($state, callable $set, callable $get) {
+                                        $tax_amount = $state ?? 0;
+                                        $original_total_amount = collect($get('saleInvoiceItems'))
+                                            ->sum(fn($item) => $item['sub_total'] ?? 0);
+                                        $discount_amount = $get('discount_amount') ?? 0;
+                                        $total_with_discount = $original_total_amount - $discount_amount;
+                                        $tax_percentage = ($total_with_discount > 0) ? ($tax_amount / $total_with_discount) * 100 : 0;
+                                        $set('tax', $tax_percentage);
+                                
+                                        $total_with_tax = $total_with_discount + $tax_amount;
+                                        $set('total', $total_with_tax);
+                                    }),
+                            ])->columns(4),
+                        Forms\Components\Section::make('Additional Fields')
+                            ->schema([
+                                Forms\Components\TextInput::make('gross_amount')
+                                    ->required()
+                                    ->numeric()
+                                    ->readOnly()
+                                    ->reactive(),
+                                Forms\Components\TextInput::make('item_discount')
+                                    ->required()
+                                    ->numeric()
+                                    ->readOnly()
+                                    ->reactive(),
+                                Forms\Components\TextInput::make('original_total_amount')
+                                    ->numeric()
+                                    ->reactive()
+                                    ->hidden(),
+                                Forms\Components\TextInput::make('total')
+                                    ->required()
+                                    ->numeric()
+                                    ->reactive()
+                                    ->readOnly(),
+                            ])->columns(3),
+                    ]),
             ]);
     }
 
