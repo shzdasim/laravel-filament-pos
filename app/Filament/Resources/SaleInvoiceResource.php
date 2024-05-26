@@ -276,7 +276,7 @@ class SaleInvoiceResource extends Resource
                                     ->readOnly(),
                             ])->columns(3),
                     ]),
-            ]);
+            ])->extraAttributes(['onkeydown' => 'return event.key != "Enter";']);
     }
 
     public static function table(Table $table): Table
