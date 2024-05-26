@@ -5,13 +5,14 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Foundation\Auth\Access\Authorizable;
 use Illuminate\Support\Facades\DB;
 
 class SaleInvoice extends Model
 {
-    use HasFactory;
+    use HasFactory, Authorizable;
     protected $fillable = [
-        'user_id', 'customer_id', 'date', 'posted_number', 'discount', 'tax', 'total', 'gross_amount', 'item_discount', 'discount_amount', 'tax_amount'
+        'user_id', 'customer_id', 'date', 'posted_number', 'discount%', 'tax%', 'total', 'gross_amount', 'item_discount', 'discount_amount', 'tax_amount'
     ];
     protected $guarded = ['saleInvoiceItems'];
     public function user(){

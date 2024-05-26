@@ -18,8 +18,10 @@ return new class extends Migration
             $table->date('posted_date')->required();
             $table->string('invoice_number')->unique()->required();
             $table->integer('invoice_amount')->required();
-            $table->integer('tax')->nullable();
-            $table->integer('discount')->nullable();
+            $table->integer('tax%')->nullable();
+            $table->integer('discount%')->nullable();
+            $table->integer('tax_amount')->nullable();
+            $table->integer('discount_amount')->nullable();
             $table->integer('total_amount')->required();
             $table->timestamps();
         });

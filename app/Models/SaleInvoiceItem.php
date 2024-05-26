@@ -10,7 +10,7 @@ class SaleInvoiceItem extends Model
 {
     use HasFactory;
     protected $fillable = [
-        'sale_invoice_id', 'product_id', 'current_quantity', 'quantity', 'price', 'discount', 'sub_total'
+        'sale_invoice_id', 'product_id', 'current_quantity', 'quantity', 'price', 'item_discount%', 'sub_total'
     ];
 
     public function saleInvoice()

@@ -20,6 +20,7 @@ return new class extends Migration
             $table->decimal('purchase_price', 8, 2)->nullable();
             $table->decimal('sale_price', 8, 2)->nullable();
             $table->decimal('avg_price', 8, 2)->nullable();
+            $table->decimal('margin', 15, 2)->nullable();
             $table->decimal('max_discount', 8, 2)->nullable();
             $table->foreignId('category_id')->constrained()->cascadeOnDelete();
             $table->timestamps();

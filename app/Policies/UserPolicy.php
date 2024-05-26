@@ -1,6 +1,7 @@
 <?php
 namespace App\Policies;
 
+use App\Models\SaleInvoice;
 use App\Models\User;
 
 class UserPolicy
@@ -22,7 +23,7 @@ class UserPolicy
 
     public function delete(User $user, User $model): bool
     {
-        return $user->hasPermission('delete_users');
+        return $user->hasPermission('delete_users') && $user->id !== $model->id;
     }
 
     public function view(User $user, User $model): bool
