@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class PurchaseInvoiceItem extends Model
 {
     use HasFactory;
+    
     protected $fillable = [
         'purchase_invoice_id', 'product_id', 'quantity', 'purchase_price', 'sale_price', 'item_discount%', 'margin', 'avg_price', 'sub_total'
     ];
@@ -28,7 +29,21 @@ class PurchaseInvoiceItem extends Model
 
         static::created(function ($item) {
             $product = $item->product;
-            $product->quantity += $item->quantity;
+            
+            // Calculate new average price
+            $totalQuantity = $product->quantity + $item->quantity;
+            $product->avg_price = (($product->avg_price * $product->quantity) + ($item->avg_price * $item->quantity)) / $totalQuantity;
+
+            // Calculate new margin
+            if ($item->sale_price > 0) {
+                $discounted_purchase_price = $item->purchase_price - ($item->purchase_price * $item->item_discount / 100);
+                $profit = $item->sale_price - $discounted_purchase_price;
+                $product->margin = ($discounted_purchase_price > 0) ? ($profit / $item->sale_price) * 100 : 0;
+            } else {
+                $product->margin = 0;
+            }
+            
+            $product->quantity = $totalQuantity;
             $product->purchase_price = $item->purchase_price;
             $product->sale_price = $item->sale_price;
             $product->save();
@@ -37,7 +52,20 @@ class PurchaseInvoiceItem extends Model
         static::updated(function ($item) {
             $original = $item->getOriginal();
             $product = $item->product;
-            $product->quantity += ($item->quantity - $original['quantity']);
+            
+            $quantityDifference = $item->quantity - $original['quantity'];
+            $totalQuantity = $product->quantity + $quantityDifference;
+            $product->avg_price = (($product->avg_price * $product->quantity) + ($item->avg_price * $quantityDifference)) / $totalQuantity;
+
+            if ($item->sale_price > 0) {
+                $discounted_purchase_price = $item->purchase_price - ($item->purchase_price * $item->item_discount / 100);
+                $profit = $item->sale_price - $discounted_purchase_price;
+                $product->margin = ($discounted_purchase_price > 0) ? ($profit / $item->sale_price) * 100 : 0;
+            } else {
+                $product->margin = 0;
+            }
+
+            $product->quantity = $totalQuantity;
             $product->purchase_price = $item->purchase_price;
             $product->sale_price = $item->sale_price;
             $product->save();
@@ -46,6 +74,23 @@ class PurchaseInvoiceItem extends Model
         static::deleted(function ($item) {
             $product = $item->product;
             $product->quantity -= $item->quantity;
+            
+            // Recalculate avg_price and margin
+            if ($product->quantity > 0) {
+                $product->avg_price = (($product->avg_price * ($product->quantity + $item->quantity)) - ($item->avg_price * $item->quantity)) / $product->quantity;
+                
+                if ($item->sale_price > 0) {
+                    $discounted_purchase_price = $item->purchase_price - ($item->purchase_price * $item->item_discount / 100);
+                    $profit = $item->sale_price - $discounted_purchase_price;
+                    $product->margin = ($discounted_purchase_price > 0) ? ($profit / $item->sale_price) * 100 : 0;
+                } else {
+                    $product->margin = 0;
+                }
+            } else {
+                $product->avg_price = 0;
+                $product->margin = 0;
+            }
+
             $product->save();
         });
     }

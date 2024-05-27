@@ -115,13 +115,31 @@ class PurchaseInvoiceResource extends Resource
                                     ->reactive()
                                     ->numeric()
                                     ->afterStateUpdated(function ($state, callable $set, callable $get) {
-                                        $purchase_price = $get('purchase_price') ?? 0;
-                                        $item_discount = $get('item_discount%') ?? 0;
-                                        $quantity = $state ?? 0;
+                                        $purchase_price = (float) $get('purchase_price') ?? 0;
+                                        $item_discount = (float) $get('item_discount%') ?? 0;
+                                        $quantity = (int) $state ?? 0;
                                         $sub_total = $purchase_price * $quantity;
                                         $discount_amount = ($sub_total * $item_discount) / 100;
                                         $sub_total_with_discount = $sub_total - $discount_amount;
                                         $set('sub_total', $sub_total_with_discount);
+                                        $product_id = $get('product_id');
+                                        $product = Product::find($product_id);
+
+                                        // Calculate margin (profit in %) and avg_price
+                                        $new_purchase_price = (float) $get('purchase_price') ?? 0;
+                                        $old_purchase_price = $product ? $product->purchase_price : 0;
+                                        $avg_price = ($old_purchase_price + $new_purchase_price) / 2;
+                                        $set('avg_price', $avg_price);
+
+                                        $sale_price = (float) $get('sale_price') ?? 0;
+                                        if($sale_price >0){
+                                            $discounted_purchase_price = $purchase_price - ($purchase_price * $item_discount / 100);
+                                            $profit = $sale_price - $discounted_purchase_price;
+                                            $margin = ($discounted_purchase_price > 0) ? ($profit / $sale_price) * 100 : 0;
+                                            $set('margin', $margin);
+                                        } else{
+                                            $set('margin', 0);
+                                        }
 
                                         // Update total amount without discount
                                         $total_amount = collect($get('../../purchaseInvoiceItems'))
@@ -129,8 +147,8 @@ class PurchaseInvoiceResource extends Resource
                                         $set('../../original_total_amount', $total_amount);
 
                                         // Recalculate the final total amount considering the discount and tax on total
-                                        $overall_discount = $get('../../discount%') ?? 0;
-                                        $tax = $get('../../tax%') ?? 0;
+                                        $overall_discount = (float) $get('../../discount%') ?? 0;
+                                        $tax = (float) $get('../../tax%') ?? 0;
                                         $total_with_discount = $total_amount - ($total_amount * $overall_discount / 100);
                                         $total_with_tax = $total_with_discount + ($total_with_discount * $tax / 100);
                                         $set('../../total_amount', $total_with_tax);
@@ -141,13 +159,31 @@ class PurchaseInvoiceResource extends Resource
                                     ->reactive()
                                     ->numeric()
                                     ->afterStateUpdated(function ($state, callable $set, callable $get) {
-                                        $purchase_price = $state ?? 0;
-                                        $quantity = $get('quantity') ?? 0;
-                                        $item_discount = $get('item_discount%') ?? 0;
+                                        $purchase_price = (float) $state ?? 0;
+                                        $quantity = (int) $get('quantity') ?? 0;
+                                        $item_discount = (float) $get('item_discount%') ?? 0;
                                         $sub_total = $purchase_price * $quantity;
                                         $discount_amount = ($sub_total * $item_discount) / 100;
                                         $sub_total_with_discount = $sub_total - $discount_amount;
                                         $set('sub_total', $sub_total_with_discount);
+                                        $product_id = $get('product_id');
+                                        $product = Product::find($product_id);
+
+                                        // Calculate margin (profit in %) and avg_price
+                                        $new_purchase_price = (float) $get('purchase_price') ?? 0;
+                                        $old_purchase_price = $product ? $product->purchase_price : 0;
+                                        $avg_price = ($old_purchase_price + $new_purchase_price) / 2;
+                                        $set('avg_price', $avg_price);
+
+                                        $sale_price = (float) $get('sale_price') ?? 0;
+                                        if($sale_price >0){
+                                            $discounted_purchase_price = $purchase_price - ($purchase_price * $item_discount / 100);
+                                            $profit = $sale_price - $discounted_purchase_price;
+                                            $margin = ($discounted_purchase_price > 0) ? ($profit / $sale_price) * 100 : 0;
+                                            $set('margin', $margin);
+                                        } else{
+                                            $set('margin', 0);
+                                        }
 
                                         // Update total amount without discount
                                         $total_amount = collect($get('../../purchaseInvoiceItems'))
@@ -155,27 +191,67 @@ class PurchaseInvoiceResource extends Resource
                                         $set('../../original_total_amount', $total_amount);
 
                                         // Recalculate the final total amount considering the discount and tax on total
-                                        $overall_discount = $get('../../discount%') ?? 0;
-                                        $tax = $get('../../tax%') ?? 0;
+                                        $overall_discount = (float) $get('../../discount%') ?? 0;
+                                        $tax = (float) $get('../../tax%') ?? 0;
                                         $total_with_discount = $total_amount - ($total_amount * $overall_discount / 100);
                                         $total_with_tax = $total_with_discount + ($total_with_discount * $tax / 100);
                                         $set('../../total_amount', $total_with_tax);
                                     }),
                                 Forms\Components\TextInput::make('sale_price')
                                     ->required()
-                                    ->numeric(),
+                                    ->numeric()
+                                    ->afterStateUpdated(function ($state, callable $set, callable $get) {
+                                        // Calculate margin (profit in %) and avg_price
+                                        $purchase_price = (float) $get('purchase_price') ?? 0;
+                                        $sale_price = (float) $state ?? 0;
+                                        $item_discount = (float) $get('item_discount%') ?? 0;
+                                        $quantity = (int) $get('quantity') ?? 0;
+                                        $product_id = $get('product_id');
+                                        $product = Product::find($product_id);
+                                        $discount_amount = ($purchase_price * $quantity * $item_discount) / 100;
+                                        if($sale_price >0){
+                                            $discounted_purchase_price = $purchase_price - ($purchase_price * $item_discount / 100);
+                                            $profit = $sale_price - $discounted_purchase_price;
+                                            $margin = ($discounted_purchase_price > 0) ? ($profit / $sale_price) * 100 : 0;
+                                            $set('margin', $margin);
+                                        } else{
+                                            $set('margin', 0);
+                                        }
+
+                                        $new_purchase_price = (float) $get('purchase_price') ?? 0;
+                                        $old_purchase_price = $product ? $product->purchase_price : 0;
+                                        $avg_price = ($old_purchase_price + $new_purchase_price) / 2;
+                                        $set('avg_price', $avg_price);
+                                    }),
                                 Forms\Components\TextInput::make('item_discount%')
                                     ->label('disc%')
                                     ->reactive()
                                     ->numeric()
                                     ->afterStateUpdated(function ($state, callable $set, callable $get) {
-                                        $item_discount = $state ?? 0;
-                                        $purchase_price = $get('purchase_price') ?? 0;
-                                        $quantity = $get('quantity') ?? 0;
+                                        $item_discount = (float) $state ?? 0;
+                                        $purchase_price = (float) $get('purchase_price') ?? 0;
+                                        $quantity = (int) $get('quantity') ?? 0;
                                         $sub_total = $purchase_price * $quantity;
                                         $discount_amount = ($sub_total * $item_discount) / 100;
                                         $sub_total_with_discount = $sub_total - $discount_amount;
                                         $set('sub_total', $sub_total_with_discount);
+                                        $product_id = $get('product_id');
+                                        $product = Product::find($product_id);
+                                        // Calculate margin (profit in %) and avg_price
+                                        $new_purchase_price = (float) $get('purchase_price') ?? 0;
+                                        $old_purchase_price = $product ? $product->purchase_price : 0;
+                                        $avg_price = ($old_purchase_price + $new_purchase_price) / 2;
+                                        $set('avg_price', $avg_price);
+
+                                        $sale_price = (float) $get('sale_price') ?? 0;
+                                        if($sale_price >0){
+                                            $discounted_purchase_price = $purchase_price - ($purchase_price * $item_discount / 100);
+                                            $profit = $sale_price - $discounted_purchase_price;
+                                            $margin = ($discounted_purchase_price > 0) ? ($profit / $sale_price) * 100 : 0;
+                                            $set('margin', $margin);
+                                        } else{
+                                            $set('margin', 0);
+                                        }
 
                                         // Update total amount without discount
                                         $total_amount = collect($get('../../purchaseInvoiceItems'))
@@ -183,12 +259,18 @@ class PurchaseInvoiceResource extends Resource
                                         $set('../../original_total_amount', $total_amount);
 
                                         // Recalculate the final total amount considering the discount and tax on total
-                                        $overall_discount = $get('../../discount%') ?? 0;
-                                        $tax = $get('../../tax%') ?? 0;
+                                        $overall_discount = (float) $get('../../discount%') ?? 0;
+                                        $tax = (float) $get('../../tax%') ?? 0;
                                         $total_with_discount = $total_amount - ($total_amount * $overall_discount / 100);
                                         $total_with_tax = $total_with_discount + ($total_with_discount * $tax / 100);
                                         $set('../../total_amount', $total_with_tax);
                                     }),
+                                Forms\Components\TextInput::make('margin')
+                                    ->reactive()
+                                    ->readOnly(),
+                                Forms\Components\TextInput::make('avg_price')
+                                    ->reactive()
+                                    ->readOnly(),
                                 Forms\Components\TextInput::make('sub_total')
                                     ->required()
                                     ->readOnly()
@@ -200,14 +282,14 @@ class PurchaseInvoiceResource extends Resource
                                         $set('../../original_total_amount', $total_amount);
 
                                         // Recalculate the final total amount considering the discount and tax on total
-                                        $overall_discount = $get('../../discount%') ?? 0;
-                                        $tax = $get('../../tax%') ?? 0;
+                                        $overall_discount = (float) $get('../../discount%') ?? 0;
+                                        $tax = (float) $get('../../tax%') ?? 0;
                                         $total_with_discount = $total_amount - ($total_amount * $overall_discount / 100);
                                         $total_with_tax = $total_with_discount + ($total_with_discount * $tax / 100);
                                         $set('../../total_amount', $total_with_tax);
                                     }),
                             ])
-                            ->columns(8)
+                            ->columns(10)
                             ->reactive(),
                     ]),
                 Forms\Components\Section::make('Tax, Discount, Total')
@@ -217,7 +299,7 @@ class PurchaseInvoiceResource extends Resource
                             ->numeric()
                             ->reactive()
                             ->afterStateUpdated(function($state, callable $set, callable $get) {
-                                $tax = $state ?? 0;
+                                $tax = (float) $state ?? 0;
                                 $original_total_amount = collect($get('purchaseInvoiceItems'))
                                     ->sum(fn($item) => $item['sub_total'] ?? 0);
                                 $total_with_discount = $original_total_amount - ($original_total_amount * ($get('discount%') ?? 0) / 100);
@@ -232,10 +314,10 @@ class PurchaseInvoiceResource extends Resource
                             ->numeric()
                             ->reactive()
                             ->afterStateUpdated(function ($state, callable $set, callable $get) {
-                                $tax_amount = $state ?? 0;
+                                $tax_amount = (float) $state ?? 0;
                                 $original_total_amount = collect($get('purchaseInvoiceItems'))
                                     ->sum(fn($item) => $item['sub_total'] ?? 0);
-                                $discount_amount = $get('discount_amount') ?? 0;
+                                $discount_amount = (float) $get('discount_amount') ?? 0;
                                 $total_with_discount = $original_total_amount - $discount_amount;
                                 $tax_percentage = ($total_with_discount > 0) ? ($tax_amount / $total_with_discount) * 100 : 0;
                                 $set('tax%', $tax_percentage);
@@ -248,13 +330,13 @@ class PurchaseInvoiceResource extends Resource
                             ->numeric()
                             ->reactive()
                             ->afterStateUpdated(function($state, callable $set, callable $get) {
-                                $discount = $state ?? 0;
+                                $discount = (float) $state ?? 0;
                                 $original_total_amount = collect($get('purchaseInvoiceItems'))
                                     ->sum(fn($item) => $item['sub_total'] ?? 0);
                                 $discount_amount = ($original_total_amount * $discount) / 100;
                                 $set('discount_amount', $discount_amount);
 
-                                $tax = $get('tax%') ?? 0;
+                                $tax = (float) $get('tax%') ?? 0;
                                 $total_with_discount = $original_total_amount - $discount_amount;
                                 $total_with_tax = $total_with_discount + ($total_with_discount * $tax / 100);
                                 $set('total_amount', $total_with_tax);
@@ -264,13 +346,13 @@ class PurchaseInvoiceResource extends Resource
                             ->numeric()
                             ->reactive()
                             ->afterStateUpdated(function ($state, callable $set, callable $get) {
-                                $discount_amount = $state ?? 0;
+                                $discount_amount = (float) $state ?? 0;
                                 $original_total_amount = collect($get('purchaseInvoiceItems'))
                                     ->sum(fn($item) => $item['sub_total'] ?? 0);
                                 $discount_percentage = ($original_total_amount > 0) ? ($discount_amount / $original_total_amount) * 100 : 0;
                                 $set('discount%', $discount_percentage);
 
-                                $tax = $get('tax%') ?? 0;
+                                $tax = (float) $get('tax%') ?? 0;
                                 $total_with_discount = $original_total_amount - $discount_amount;
                                 $total_with_tax = $total_with_discount + ($total_with_discount * $tax / 100);
                                 $set('total_amount', $total_with_tax);
