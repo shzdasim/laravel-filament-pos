@@ -2,12 +2,14 @@
 
 namespace App\Filament\Resources;
 
+use App\Exceptions\CustomerDeletionException;
 use App\Filament\Resources\CustomerResource\Pages;
 use App\Filament\Resources\CustomerResource\RelationManagers;
 use App\Models\Customer;
 use App\Models\User;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -72,7 +74,20 @@ class CustomerResource extends Resource
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\DeleteBulkAction::make()
+                    ->action(function ($records) {
+                        foreach ($records as $record) {
+                            try {
+                                $record->delete();
+                            } catch (CustomerDeletionException $e) {
+                                Notification::make()
+                                    ->title('Deletion Failed')
+                                    ->body($e->getMessage())
+                                    ->danger()
+                                    ->send();
+                            }
+                        }
+                    }),
                 ])->visible(fn (User $user, $record) => $user->can('delete', $record)),
             ]);
     }

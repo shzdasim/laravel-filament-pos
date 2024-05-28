@@ -9,6 +9,8 @@ use App\Models\User;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
+use App\Exceptions\CategoryDeletionException;
+use Filament\Notifications\Notification;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
@@ -61,7 +63,20 @@ class CategoryResource extends Resource
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\DeleteBulkAction::make()
+                    ->action(function ($records) {
+                        foreach ($records as $record) {
+                            try {
+                                $record->delete();
+                            } catch (CategoryDeletionException $e) {
+                                Notification::make()
+                                    ->title('Deletion Failed')
+                                    ->body($e->getMessage())
+                                    ->danger()
+                                    ->send();
+                            }
+                        }
+                    }),
                 ])->visible(fn (User $user, $record) => $user->can('delete', $record)),
             ]);
     }
