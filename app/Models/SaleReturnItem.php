@@ -36,7 +36,6 @@ class SaleReturnItem extends Model
         static::deleted(function ($item) {
             $product = $item->product;
             $product->quantity -= $item->return_quantity;
-           Log::alert($product);
             $product->save();
         });
     }
