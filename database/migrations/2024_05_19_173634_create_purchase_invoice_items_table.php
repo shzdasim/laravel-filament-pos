@@ -18,7 +18,7 @@ return new class extends Migration
             $table->integer('quantity');
             $table->decimal('purchase_price', 10, 2);
             $table->decimal('sale_price', 10, 2);
-            $table->decimal('item_discount%', 10, 2)->nullable();
+            $table->decimal('item_discount_percentage', 10, 2)->nullable();
             $table->decimal('margin', 10, 2)->nullable();
             $table->decimal('avg_price', 10, 2)->nullable();
             $table->decimal('sub_total', 10, 2);

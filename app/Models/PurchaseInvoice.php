@@ -10,7 +10,7 @@ class PurchaseInvoice extends Model
 {
     use HasFactory;
     protected $fillable = [
-        'supplier_id', 'posted_number','posted_date','invoice_number', 'invoice_amount','tax%', 'discount%', 'tax_amount', 'discount_amount', 'total_amount'
+        'supplier_id', 'posted_number','posted_date','invoice_number', 'invoice_amount','tax_percentage', 'discount_percentage', 'tax_amount', 'discount_amount', 'total_amount'
     ];
     protected $guarded = ['purchaseInvoiceItems'];
 

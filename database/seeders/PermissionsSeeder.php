@@ -44,6 +44,10 @@ class PermissionsSeeder extends Seeder
             'create_purchaseinvoices',
             'edit_purchaseinvoices',
             'delete_purchaseinvoices',
+            'view_salereturns',
+            'create_salereturns',
+            'edit_salereturns',
+            'delete_salereturns',
 
         ];
 

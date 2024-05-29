@@ -11,14 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('sale_invoice_items', function (Blueprint $table) {
+        Schema::create('sale_return_items', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('sale_invoice_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('product_id')->constrained()->cascadeOnDelete();
-            $table->integer('current_quantity');
-            $table->integer('quantity');
+            $table->foreignId('sale_return_id')->constrained('sale_returns')->onDelete('cascade');
+            $table->foreignId('product_id')->constrained('products');
+            $table->integer('sale_quantity')->nullable(); // Nullable for open returns
+            $table->integer('return_quantity');
             $table->decimal('price', 10, 2);
-            $table->decimal('item_discount_percentage', 10, 2)->nullable();
+            $table->decimal('item_discount_percentage', 5, 2)->default(0);
             $table->decimal('sub_total', 10, 2);
             $table->timestamps();
         });
@@ -29,6 +29,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('sale_invoice_items');
+        Schema::dropIfExists('sale_return_items');
     }
 };

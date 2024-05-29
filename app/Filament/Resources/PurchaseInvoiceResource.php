@@ -116,7 +116,7 @@ class PurchaseInvoiceResource extends Resource
                                     ->numeric()
                                     ->afterStateUpdated(function ($state, callable $set, callable $get) {
                                         $purchase_price = (float) $get('purchase_price') ?? 0;
-                                        $item_discount = (float) $get('item_discount%') ?? 0;
+                                        $item_discount = (float) $get('item_discount_percentage') ?? 0;
                                         $quantity = (int) $state ?? 0;
                                         $sub_total = $purchase_price * $quantity;
                                         $discount_amount = ($sub_total * $item_discount) / 100;
@@ -147,8 +147,8 @@ class PurchaseInvoiceResource extends Resource
                                         $set('../../original_total_amount', $total_amount);
 
                                         // Recalculate the final total amount considering the discount and tax on total
-                                        $overall_discount = (float) $get('../../discount%') ?? 0;
-                                        $tax = (float) $get('../../tax%') ?? 0;
+                                        $overall_discount = (float) $get('../../discount_percentage') ?? 0;
+                                        $tax = (float) $get('../../tax_percentage') ?? 0;
                                         $total_with_discount = $total_amount - ($total_amount * $overall_discount / 100);
                                         $total_with_tax = $total_with_discount + ($total_with_discount * $tax / 100);
                                         $set('../../total_amount', $total_with_tax);
@@ -161,7 +161,7 @@ class PurchaseInvoiceResource extends Resource
                                     ->afterStateUpdated(function ($state, callable $set, callable $get) {
                                         $purchase_price = (float) $state ?? 0;
                                         $quantity = (int) $get('quantity') ?? 0;
-                                        $item_discount = (float) $get('item_discount%') ?? 0;
+                                        $item_discount = (float) $get('item_discount_percentage') ?? 0;
                                         $sub_total = $purchase_price * $quantity;
                                         $discount_amount = ($sub_total * $item_discount) / 100;
                                         $sub_total_with_discount = $sub_total - $discount_amount;
@@ -191,7 +191,7 @@ class PurchaseInvoiceResource extends Resource
                                         $set('../../original_total_amount', $total_amount);
 
                                         // Recalculate the final total amount considering the discount and tax on total
-                                        $overall_discount = (float) $get('../../discount%') ?? 0;
+                                        $overall_discount = (float) $get('../../discount_percentage') ?? 0;
                                         $tax = (float) $get('../../tax%') ?? 0;
                                         $total_with_discount = $total_amount - ($total_amount * $overall_discount / 100);
                                         $total_with_tax = $total_with_discount + ($total_with_discount * $tax / 100);
@@ -204,7 +204,7 @@ class PurchaseInvoiceResource extends Resource
                                         // Calculate margin (profit in %) and avg_price
                                         $purchase_price = (float) $get('purchase_price') ?? 0;
                                         $sale_price = (float) $state ?? 0;
-                                        $item_discount = (float) $get('item_discount%') ?? 0;
+                                        $item_discount = (float) $get('item_discount_percentage') ?? 0;
                                         $quantity = (int) $get('quantity') ?? 0;
                                         $product_id = $get('product_id');
                                         $product = Product::find($product_id);
@@ -223,7 +223,7 @@ class PurchaseInvoiceResource extends Resource
                                         $avg_price = ($old_purchase_price + $new_purchase_price) / 2;
                                         $set('avg_price', $avg_price);
                                     }),
-                                Forms\Components\TextInput::make('item_discount%')
+                                Forms\Components\TextInput::make('item_discount_percentage')
                                     ->label('disc%')
                                     ->reactive()
                                     ->numeric()
@@ -259,8 +259,8 @@ class PurchaseInvoiceResource extends Resource
                                         $set('../../original_total_amount', $total_amount);
 
                                         // Recalculate the final total amount considering the discount and tax on total
-                                        $overall_discount = (float) $get('../../discount%') ?? 0;
-                                        $tax = (float) $get('../../tax%') ?? 0;
+                                        $overall_discount = (float) $get('../../discount_percentage') ?? 0;
+                                        $tax = (float) $get('../../tax_percentage') ?? 0;
                                         $total_with_discount = $total_amount - ($total_amount * $overall_discount / 100);
                                         $total_with_tax = $total_with_discount + ($total_with_discount * $tax / 100);
                                         $set('../../total_amount', $total_with_tax);
@@ -282,8 +282,8 @@ class PurchaseInvoiceResource extends Resource
                                         $set('../../original_total_amount', $total_amount);
 
                                         // Recalculate the final total amount considering the discount and tax on total
-                                        $overall_discount = (float) $get('../../discount%') ?? 0;
-                                        $tax = (float) $get('../../tax%') ?? 0;
+                                        $overall_discount = (float) $get('../../discount_percentage') ?? 0;
+                                        $tax = (float) $get('../../tax_percentage') ?? 0;
                                         $total_with_discount = $total_amount - ($total_amount * $overall_discount / 100);
                                         $total_with_tax = $total_with_discount + ($total_with_discount * $tax / 100);
                                         $set('../../total_amount', $total_with_tax);
@@ -294,7 +294,7 @@ class PurchaseInvoiceResource extends Resource
                     ]),
                 Forms\Components\Section::make('Tax, Discount, Total')
                     ->schema([
-                        Forms\Components\TextInput::make('tax%')
+                        Forms\Components\TextInput::make('tax_percentage')
                             ->label('Tax%')
                             ->numeric()
                             ->reactive()
@@ -302,7 +302,7 @@ class PurchaseInvoiceResource extends Resource
                                 $tax = (float) $state ?? 0;
                                 $original_total_amount = collect($get('purchaseInvoiceItems'))
                                     ->sum(fn($item) => $item['sub_total'] ?? 0);
-                                $total_with_discount = $original_total_amount - ($original_total_amount * ($get('discount%') ?? 0) / 100);
+                                $total_with_discount = $original_total_amount - ($original_total_amount * ($get('discount_percentage') ?? 0) / 100);
                                 $tax_amount = ($total_with_discount * $tax) / 100;
                                 $set('tax_amount', $tax_amount);
 
@@ -320,12 +320,12 @@ class PurchaseInvoiceResource extends Resource
                                 $discount_amount = (float) $get('discount_amount') ?? 0;
                                 $total_with_discount = $original_total_amount - $discount_amount;
                                 $tax_percentage = ($total_with_discount > 0) ? ($tax_amount / $total_with_discount) * 100 : 0;
-                                $set('tax%', $tax_percentage);
+                                $set('tax_percentage', $tax_percentage);
 
                                 $total_with_tax = $total_with_discount + $tax_amount;
                                 $set('total_amount', $total_with_tax);
                             }),
-                        Forms\Components\TextInput::make('discount%')
+                        Forms\Components\TextInput::make('discount_percentage')
                             ->label('Discount %')
                             ->numeric()
                             ->reactive()
@@ -336,7 +336,7 @@ class PurchaseInvoiceResource extends Resource
                                 $discount_amount = ($original_total_amount * $discount) / 100;
                                 $set('discount_amount', $discount_amount);
 
-                                $tax = (float) $get('tax%') ?? 0;
+                                $tax = (float) $get('tax_percentage') ?? 0;
                                 $total_with_discount = $original_total_amount - $discount_amount;
                                 $total_with_tax = $total_with_discount + ($total_with_discount * $tax / 100);
                                 $set('total_amount', $total_with_tax);
@@ -350,9 +350,9 @@ class PurchaseInvoiceResource extends Resource
                                 $original_total_amount = collect($get('purchaseInvoiceItems'))
                                     ->sum(fn($item) => $item['sub_total'] ?? 0);
                                 $discount_percentage = ($original_total_amount > 0) ? ($discount_amount / $original_total_amount) * 100 : 0;
-                                $set('discount%', $discount_percentage);
+                                $set('discount_percentage', $discount_percentage);
 
-                                $tax = (float) $get('tax%') ?? 0;
+                                $tax = (float) $get('tax_percentage') ?? 0;
                                 $total_with_discount = $original_total_amount - $discount_amount;
                                 $total_with_tax = $total_with_discount + ($total_with_discount * $tax / 100);
                                 $set('total_amount', $total_with_tax);
@@ -391,11 +391,11 @@ class PurchaseInvoiceResource extends Resource
                     ->label('INV.AMNT')
                     ->numeric()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('tax%')
+                Tables\Columns\TextColumn::make('tax_percentage')
                     ->label('Tax%')
                     ->numeric()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('discount%')
+                Tables\Columns\TextColumn::make('discount_percentage')
                     ->label('DISC.%')
                     ->numeric()
                     ->sortable(),

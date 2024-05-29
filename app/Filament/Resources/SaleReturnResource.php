@@ -2,10 +2,12 @@
 
 namespace App\Filament\Resources;
 
-use App\Filament\Resources\SaleInvoiceResource\Pages;
+use App\Filament\Resources\SaleReturnResource\Pages;
 use App\Models\Customer;
 use App\Models\Product;
 use App\Models\SaleInvoice;
+use App\Models\SaleReturn;
+use App\Models\SaleInvoiceItem;
 use App\Models\User;
 use Closure;
 use Filament\Forms;
@@ -13,26 +15,25 @@ use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Form;
 use Filament\Forms\Get;
-use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 
-class SaleInvoiceResource extends Resource
+class SaleReturnResource extends Resource
 {
-    protected static ?string $model = SaleInvoice::class;
+    protected static ?string $model = SaleReturn::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-calculator';
+    protected static ?string $navigationIcon = 'heroicon-o-folder-minus';
 
     public static function getNavigationBadge(): ?string
     {
         return static::getModel()::count();
     }
 
-    protected static ?string $navigationLabel = 'SALE INVOICES';
-    protected static ?string $navigationGroup = 'INVOICES';
-    protected static ?string $modelLabel = 'Sale Invoice';
-    protected static ?int $navigationSort = 1;
+    protected static ?string $navigationLabel = 'SALE RETURNS';
+    protected static ?string $navigationGroup = 'RETURNS';
+    protected static ?string $modelLabel = 'Sale Return';
+    protected static ?int $navigationSort = 2;
 
     public static function form(Form $form): Form
     {
@@ -53,21 +54,43 @@ class SaleInvoiceResource extends Resource
                                 $defaultCustomer = Customer::where('id', 1)->first();
                                 return $defaultCustomer ? $defaultCustomer->id : null;
                             }),
+                        Forms\Components\Select::make('sale_invoice_id')
+                            ->label('Sale Invoice')
+                            ->relationship('saleInvoice', 'posted_number')
+                            ->searchable()
+                            ->preload()
+                            ->reactive()
+                            ->afterStateUpdated(function ($state, callable $set) {
+                                if ($state) {
+                                    $saleInvoice = SaleInvoice::find($state);
+                                    $set('customer_id', $saleInvoice->customer_id);
+                                    $set('discount_percentage', $saleInvoice->discount_percentage);
+                                    $set('tax_percentage', $saleInvoice->tax_percentage);
+                                    $set('discount_amount', $saleInvoice->discount_amount);
+                                    $set('tax_amount', $saleInvoice->tax_amount);
+                                } else {
+                                    $set('customer_id', 0);
+                                    $set('discount_percentage', 0);
+                                    $set('tax_percentage', 0);
+                                    $set('discount_amount', 0);
+                                    $set('tax_amount', 0);
+                                }
+                            }),
                         Forms\Components\TextInput::make('posted_number')
                             ->required()
                             ->maxLength(255)
                             ->readOnly()
-                            ->default(SaleInvoice::generateCode()),
+                            ->default(SaleReturn::generateCode()),
                         Forms\Components\DatePicker::make('date')
                             ->required()
                             ->default(now())
                             ->native(false),
-                    ])->columns(3),
+                    ])->columns(4),
                 Forms\Components\Section::make()
                     ->schema([
-                        Repeater::make('saleInvoiceItems')
-                            ->relationship('saleInvoiceItems')
-                            ->label('Sale Invoice Items')
+                        Repeater::make('saleReturnItems')
+                            ->relationship('saleReturnItems')
+                            ->label('Sale Return Items')
                             ->schema([
                                 Forms\Components\Select::make('product_id')
                                     ->relationship('product', 'name')
@@ -76,36 +99,42 @@ class SaleInvoiceResource extends Resource
                                     ->native(false)
                                     ->preload()
                                     ->reactive()
-                                    ->afterStateUpdated(function ($state, callable $set, callable $get) {
-                                        if ($state) {
-                                            $product = Product::find($state);
-                                            if ($product) {
-                                                $set('current_quantity', $product->quantity);
-                                                $set('price', $product->sale_price);
-                                            } else {
-                                                $set('current_quantity', 0);
-                                                $set('price', 0);
-                                            }
+                                    ->options(function (callable $get) {
+                                        $saleInvoiceId = $get('../../sale_invoice_id');
+                                        if ($saleInvoiceId) {
+                                            $saleInvoice = SaleInvoice::find($saleInvoiceId);
+                                            return $saleInvoice->saleInvoiceItems->pluck('product.name', 'product.id');
                                         }
+                                        return Product::all()->pluck('name', 'id');
                                     })
-                                    ->disableOptionWhen(function ($value, $state, Get $get) {
-                                        return collect($get('../*.product_id'))
-                                            ->reject(fn($id) => $id == $state)
-                                            ->filter()
-                                            ->contains($value);
-                                    })
-                                    ->columnSpan(3),
-                                Forms\Components\TextInput::make('current_quantity')
-                                    ->label('CURRENT.Q')
-                                    ->required()
+                                    ->afterStateUpdated(function ($state, callable $set, callable $get) {
+                                        $saleInvoiceId = $get('../../sale_invoice_id');
+                                        if ($saleInvoiceId && $state) {
+                                            $saleInvoiceItem = SaleInvoiceItem::where('sale_invoice_id', $saleInvoiceId)
+                                                ->where('product_id', $state)
+                                                ->first();
+                                            if ($saleInvoiceItem) {
+                                                $set('sale_quantity', $saleInvoiceItem->quantity);
+                                                $set('price', $saleInvoiceItem->price);
+                                                $set('item_discount_percentage', $saleInvoiceItem->item_discount_percentage);
+                                            }
+                                        } else {
+                                            $set('sale_quantity', null);
+                                            $set('price', null);
+                                            $set('item_discount_percentage', null);
+                                        }
+                                    })->columnSpan(3),
+                                Forms\Components\TextInput::make('sale_quantity')
+                                    ->label('SALE.Q')
                                     ->numeric()
-                                    ->readOnly(),
-                                Forms\Components\TextInput::make('quantity')
+                                    ->readOnly()
+                                    ->nullable(),
+                                Forms\Components\TextInput::make('return_quantity')
+                                    ->label('RETURN.Q')
                                     ->required()
                                     ->numeric()
                                     ->reactive()
                                     ->afterStateUpdated(function ($state, callable $set, callable $get) {
-                                        $current_quantity = $get('current_quantity') ?? 0;
                                         $price = $get('price') ?? 0;
                                         $item_discount = $get('item_discount_percentage') ?? 0;
                                         $quantity = $state ?? 0;
@@ -115,16 +144,13 @@ class SaleInvoiceResource extends Resource
                                         $set('sub_total', $sub_total_with_discount);
 
                                         // Calculate gross amount and item discount
-                                        $gross_amount = collect($get('../../saleInvoiceItems'))
-                                            ->sum(fn($item) => ($item['price'] ?? 0) * ($item['quantity'] ?? 0));
-                                        $item_discount_total = collect($get('../../saleInvoiceItems'))
-                                            ->sum(fn($item) => (($item['price'] ?? 0) * ($item['quantity'] ?? 0) * ($item['item_discount_percentage'] ?? 0)) / 100);
+                                        $gross_total = collect($get('../../saleReturnItems'))
+                                            ->sum(fn($item) => ($item['price'] ?? 0) * ($item['return_quantity'] ?? 0));
 
-                                        $total_amount = collect($get('../../saleInvoiceItems'))
+                                        $total_amount = collect($get('../../saleReturnItems'))
                                             ->sum(fn($item) => $item['sub_total'] ?? 0);
 
-                                        $set('../../gross_amount', $gross_amount);
-                                        $set('../../item_discount', $item_discount_total);
+                                        $set('../../gross_total', $gross_total);
                                         $set('../../original_total_amount', $total_amount);
 
                                         $overall_discount = $get('../../discount_percentage') ?? 0;
@@ -135,8 +161,8 @@ class SaleInvoiceResource extends Resource
                                     })
                                     ->rules([
                                         fn(Get $get): Closure => function (string $attribute, $value, Closure $fail) use ($get) {
-                                            $current_quantity = $get('current_quantity') ?? 0;
-                                            if ($value > $current_quantity) {
+                                            $sale_quantity = $get('sale_quantity') ?? 0;
+                                            if ($value > $sale_quantity) {
                                                 $fail('The quantity cannot exceed the available stock.');
                                             }
                                         }
@@ -153,23 +179,20 @@ class SaleInvoiceResource extends Resource
                                     ->afterStateUpdated(function ($state, callable $set, callable $get) {
                                         $item_discount = $state ?? 0;
                                         $price = $get('price') ?? 0;
-                                        $quantity = $get('quantity') ?? 0;
+                                        $quantity = $get('return_quantity') ?? 0;
                                         $sub_total = $price * $quantity;
                                         $discount_amount = ($sub_total * $item_discount) / 100;
                                         $sub_total_with_discount = $sub_total - $discount_amount;
                                         $set('sub_total', $sub_total_with_discount);
 
                                         // Calculate gross amount and item discount
-                                        $gross_amount = collect($get('../../saleInvoiceItems'))
-                                            ->sum(fn($item) => ($item['price'] ?? 0) * ($item['quantity'] ?? 0));
-                                        $item_discount_total = collect($get('../../saleInvoiceItems'))
-                                            ->sum(fn($item) => (($item['price'] ?? 0) * ($item['quantity'] ?? 0) * ($item['item_discount_percentage'] ?? 0)) / 100);
-
-                                        $total_amount = collect($get('../../saleInvoiceItems'))
+                                        $gross_total = collect($get('../../saleReturnItems'))
+                                            ->sum(fn($item) => ($item['price'] ?? 0) * ($item['return_quantity'] ?? 0));
+                                       
+                                        $total_amount = collect($get('../../saleReturnItems'))
                                             ->sum(fn($item) => $item['sub_total'] ?? 0);
 
-                                        $set('../../gross_amount', $gross_amount);
-                                        $set('../../item_discount', $item_discount_total);
+                                        $set('../../gross_total', $gross_total);
                                         $set('../../original_total_amount', $total_amount);
 
                                         $overall_discount = $get('../../discount_percentage') ?? 0;
@@ -187,7 +210,7 @@ class SaleInvoiceResource extends Resource
                     ]),
                 Section::make()
                     ->schema([
-                        Forms\Components\Section::make('Tax, Discount')
+                        Forms\Components\Section::make('Tax, Discount & Total')
                             ->schema([
                                 Forms\Components\TextInput::make('discount_percentage')
                                     ->label('Discount %')
@@ -195,7 +218,7 @@ class SaleInvoiceResource extends Resource
                                     ->reactive()
                                     ->afterStateUpdated(function ($state, callable $set, callable $get) {
                                         $discount = $state ?? 0;
-                                        $original_total_amount = collect($get('saleInvoiceItems'))
+                                        $original_total_amount = collect($get('saleReturnItems'))
                                             ->sum(fn($item) => $item['sub_total'] ?? 0);
                                         $discount_amount = ($original_total_amount * $discount) / 100;
                                         $set('discount_amount', $discount_amount);
@@ -206,12 +229,11 @@ class SaleInvoiceResource extends Resource
                                         $set('total', $total_with_tax);
                                     }),
                                 Forms\Components\TextInput::make('discount_amount')
-                                    ->label('Discount Amount')
                                     ->numeric()
                                     ->reactive()
                                     ->afterStateUpdated(function ($state, callable $set, callable $get) {
                                         $discount_amount = $state ?? 0;
-                                        $original_total_amount = collect($get('saleInvoiceItems'))
+                                        $original_total_amount = collect($get('saleReturnItems'))
                                             ->sum(fn($item) => $item['sub_total'] ?? 0);
                                         $discount_percentage = ($original_total_amount > 0) ? ($discount_amount / $original_total_amount) * 100 : 0;
                                         $set('discount_percentage', $discount_percentage);
@@ -227,22 +249,20 @@ class SaleInvoiceResource extends Resource
                                     ->reactive()
                                     ->afterStateUpdated(function ($state, callable $set, callable $get) {
                                         $tax = $state ?? 0;
-                                        $original_total_amount = collect($get('saleInvoiceItems'))
+                                        $original_total_amount = collect($get('saleReturnItems'))
                                             ->sum(fn($item) => $item['sub_total'] ?? 0);
                                         $total_with_discount = $original_total_amount - ($original_total_amount * ($get('discount_percentage') ?? 0) / 100);
                                         $tax_amount = ($total_with_discount * $tax) / 100;
                                         $set('tax_amount', $tax_amount);
-
                                         $total_with_tax = $total_with_discount + $tax_amount;
                                         $set('total', $total_with_tax);
                                     }),
                                 Forms\Components\TextInput::make('tax_amount')
-                                    ->label('Tax Amount')
                                     ->numeric()
                                     ->reactive()
                                     ->afterStateUpdated(function ($state, callable $set, callable $get) {
                                         $tax_amount = $state ?? 0;
-                                        $original_total_amount = collect($get('saleInvoiceItems'))
+                                        $original_total_amount = collect($get('saleReturnItems'))
                                             ->sum(fn($item) => $item['sub_total'] ?? 0);
                                         $discount_amount = $get('discount_amount') ?? 0;
                                         $total_with_discount = $original_total_amount - $discount_amount;
@@ -252,78 +272,40 @@ class SaleInvoiceResource extends Resource
                                         $total_with_tax = $total_with_discount + $tax_amount;
                                         $set('total', $total_with_tax);
                                     }),
-                            ])->columns(4),
-                        Forms\Components\Section::make('Additional Fields')
-                            ->schema([
-                                Forms\Components\TextInput::make('gross_amount')
-                                    ->required()
+                                Forms\Components\TextInput::make('gross_total')
                                     ->numeric()
                                     ->readOnly()
                                     ->reactive(),
-                                Forms\Components\TextInput::make('item_discount')
-                                    ->required()
-                                    ->numeric()
-                                    ->readOnly()
-                                    ->reactive(),
-                                Forms\Components\TextInput::make('original_total_amount')
-                                    ->numeric()
-                                    ->reactive()
-                                    ->hidden(),
                                 Forms\Components\TextInput::make('total')
-                                    ->required()
                                     ->numeric()
                                     ->reactive()
                                     ->readOnly(),
-                            ])->columns(3),
+                            ])->columns(6),
                     ]),
-            ])->extraAttributes(['onkeydown' => 'return event.key != "Enter";']);
+            ]);
     }
 
     public static function table(Table $table): Table
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('user.name')
-                    ->numeric()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('customer.name')
-                    ->numeric()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('posted_number')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('date')
-                    ->date()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('discount_percentage')
-                    ->numeric()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('tax_percentage')
-                    ->numeric()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('total')
-                    ->label('Total')
-                    ->numeric()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('created_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('updated_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('posted_number'),
+                Tables\Columns\TextColumn::make('customer.name')->label('Customer'),
+                Tables\Columns\TextColumn::make('date')->date(),
+                Tables\Columns\TextColumn::make('gross_total')->money('usd'),
+                Tables\Columns\TextColumn::make('discount_amount')->money('usd'),
+                Tables\Columns\TextColumn::make('tax_amount')->money('usd'),
+                Tables\Columns\TextColumn::make('total')->money('usd'),
             ])
             ->filters([
                 //
             ])
             ->actions([
-                Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                ])->visible(fn (User $user, $record) => $user->can('delete', $record)),
+                Tables\Actions\DeleteBulkAction::make(),
             ]);
     }
 
@@ -337,10 +319,9 @@ class SaleInvoiceResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListSaleInvoices::route('/'),
-            'create' => Pages\CreateSaleInvoice::route('/create'),
-            'view' => Pages\ViewSaleInvoice::route('/{record}'),
-            'edit' => Pages\EditSaleInvoice::route('/{record}/edit'),
+            'index' => Pages\ListSaleReturns::route('/'),
+            'create' => Pages\CreateSaleReturn::route('/create'),
+            'edit' => Pages\EditSaleReturn::route('/{record}/edit'),
         ];
     }
 }

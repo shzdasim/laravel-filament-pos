@@ -10,7 +10,7 @@ class PurchaseInvoiceItem extends Model
     use HasFactory;
     
     protected $fillable = [
-        'purchase_invoice_id', 'product_id', 'quantity', 'purchase_price', 'sale_price', 'item_discount%', 'margin', 'avg_price', 'sub_total'
+        'purchase_invoice_id', 'product_id', 'quantity', 'purchase_price', 'sale_price', 'item_discount_percentage', 'margin', 'avg_price', 'sub_total'
     ];
 
     public function purchaseInvoice()
@@ -36,7 +36,7 @@ class PurchaseInvoiceItem extends Model
 
             // Calculate new margin
             if ($item->sale_price > 0) {
-                $discounted_purchase_price = $item->purchase_price - ($item->purchase_price * $item->item_discount / 100);
+                $discounted_purchase_price = $item->purchase_price - ($item->purchase_price * $item->item_discount_percentage / 100);
                 $profit = $item->sale_price - $discounted_purchase_price;
                 $product->margin = ($discounted_purchase_price > 0) ? ($profit / $item->sale_price) * 100 : 0;
             } else {
@@ -58,7 +58,7 @@ class PurchaseInvoiceItem extends Model
             $product->avg_price = (($product->avg_price * $product->quantity) + ($item->avg_price * $quantityDifference)) / $totalQuantity;
 
             if ($item->sale_price > 0) {
-                $discounted_purchase_price = $item->purchase_price - ($item->purchase_price * $item->item_discount / 100);
+                $discounted_purchase_price = $item->purchase_price - ($item->purchase_price * $item->item_discount_percentage / 100);
                 $profit = $item->sale_price - $discounted_purchase_price;
                 $product->margin = ($discounted_purchase_price > 0) ? ($profit / $item->sale_price) * 100 : 0;
             } else {
@@ -80,7 +80,7 @@ class PurchaseInvoiceItem extends Model
                 $product->avg_price = (($product->avg_price * ($product->quantity + $item->quantity)) - ($item->avg_price * $item->quantity)) / $product->quantity;
                 
                 if ($item->sale_price > 0) {
-                    $discounted_purchase_price = $item->purchase_price - ($item->purchase_price * $item->item_discount / 100);
+                    $discounted_purchase_price = $item->purchase_price - ($item->purchase_price * $item->item_discount_percentage / 100);
                     $profit = $item->sale_price - $discounted_purchase_price;
                     $product->margin = ($discounted_purchase_price > 0) ? ($profit / $item->sale_price) * 100 : 0;
                 } else {

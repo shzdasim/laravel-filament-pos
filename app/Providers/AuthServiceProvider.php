@@ -7,6 +7,7 @@ use App\Models\Customer;
 use App\Models\Product;
 use App\Models\PurchaseInvoice;
 use App\Models\SaleInvoice;
+use App\Models\SaleReturn;
 use App\Models\Supplier;
 use App\Models\User;
 use App\Policies\ApplicationPolicy;
@@ -15,6 +16,7 @@ use App\Policies\CustomerPolicy;
 use App\Policies\ProductPolicy;
 use App\Policies\PurchaseInvoicePolicy;
 use App\Policies\SaleInvoicePolicy;
+use App\Policies\SaleReturnPolicy;
 use App\Policies\SupplierPolicy;
 use App\Policies\UserPolicy;
 use Illuminate\Auth\Access\Gate;
@@ -36,6 +38,7 @@ class AuthServiceProvider extends ServiceProvider
         Customer::class => CustomerPolicy::class,
         SaleInvoice::class => SaleInvoicePolicy::class,
         PurchaseInvoice::class => PurchaseInvoicePolicy::class,
+        SaleReturn::class => SaleReturnPolicy::class,
     ];
 
     /**

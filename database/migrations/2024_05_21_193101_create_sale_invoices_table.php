@@ -17,8 +17,8 @@ return new class extends Migration
             $table->foreignId('customer_id')->constrained()->cascadeOnDelete();
             $table->string('posted_number')->unique()->required();
             $table->date('date');
-            $table->decimal('discount%')->nullable();
-            $table->decimal('tax%')->nullable();
+            $table->decimal('discount_percentage')->nullable();
+            $table->decimal('tax_percentage')->nullable();
             $table->decimal('total')->nullable();
             $table->decimal('gross_amount', 15, 2)->nullable();
             $table->decimal('item_discount', 15, 2)->nullable();
