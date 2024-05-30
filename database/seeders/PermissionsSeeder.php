@@ -48,6 +48,10 @@ class PermissionsSeeder extends Seeder
             'create_salereturns',
             'edit_salereturns',
             'delete_salereturns',
+            'View PurchaseReturn',
+            'Create PurchaseReturn',
+            'Edit PurchaseReturn',
+            'Delete PurchaseReturn',
 
         ];
 

@@ -18,7 +18,7 @@ class CreateProduct extends CreateRecord
 
     protected function getFormActions(): array
     {
-        // Removing the "Create & Create Another" button by not including it
+        // Removing the "Create & Create Another" button by not including 
         return [
             Action::make('create')
                 ->label('Create Product')

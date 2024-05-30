@@ -8,7 +8,6 @@ use App\Models\Product;
 use App\Models\SaleInvoice;
 use App\Models\SaleReturn;
 use App\Models\SaleInvoiceItem;
-use App\Models\User;
 use Closure;
 use Filament\Forms;
 use Filament\Forms\Components\Repeater;
@@ -23,7 +22,7 @@ class SaleReturnResource extends Resource
 {
     protected static ?string $model = SaleReturn::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-folder-minus';
+    protected static ?string $navigationIcon = 'heroicon-o-receipt-refund';
 
     public static function getNavigationBadge(): ?string
     {
@@ -118,6 +117,13 @@ class SaleReturnResource extends Resource
                                                 $set('price', $saleInvoiceItem->price);
                                                 $set('item_discount_percentage', $saleInvoiceItem->item_discount_percentage);
                                             }
+                                        } else if ($state) {
+                                            $product = Product::find($state);
+                                            if ($product) {
+                                                $set('price', $product->sale_price);
+                                            }
+                                            $set('sale_quantity', null);
+                                            $set('item_discount_percentage', null);
                                         } else {
                                             $set('sale_quantity', null);
                                             $set('price', null);
@@ -162,8 +168,9 @@ class SaleReturnResource extends Resource
                                     ->rules([
                                         fn(Get $get): Closure => function (string $attribute, $value, Closure $fail) use ($get) {
                                             $sale_quantity = $get('sale_quantity') ?? 0;
-                                            if ($value > $sale_quantity) {
-                                                $fail('The quantity cannot exceed the available stock.');
+                                            $saleInvoiceId = $get('../../sale_invoice_id');
+                                            if ($saleInvoiceId && $value > $sale_quantity) {
+                                                $fail('The quantity cannot exceed the Sale Quantity.');
                                             }
                                         }
                                     ]),
@@ -188,7 +195,7 @@ class SaleReturnResource extends Resource
                                         // Calculate gross amount and item discount
                                         $gross_total = collect($get('../../saleReturnItems'))
                                             ->sum(fn($item) => ($item['price'] ?? 0) * ($item['return_quantity'] ?? 0));
-                                       
+
                                         $total_amount = collect($get('../../saleReturnItems'))
                                             ->sum(fn($item) => $item['sub_total'] ?? 0);
 
@@ -218,8 +225,7 @@ class SaleReturnResource extends Resource
                                     ->reactive()
                                     ->afterStateUpdated(function ($state, callable $set, callable $get) {
                                         $discount = $state ?? 0;
-                                        $original_total_amount = collect($get('saleReturnItems'))
-                                            ->sum(fn($item) => $item['sub_total'] ?? 0);
+                                        $original_total_amount = $get('original_total_amount') ?? 0;
                                         $discount_amount = ($original_total_amount * $discount) / 100;
                                         $set('discount_amount', $discount_amount);
 
@@ -233,8 +239,7 @@ class SaleReturnResource extends Resource
                                     ->reactive()
                                     ->afterStateUpdated(function ($state, callable $set, callable $get) {
                                         $discount_amount = $state ?? 0;
-                                        $original_total_amount = collect($get('saleReturnItems'))
-                                            ->sum(fn($item) => $item['sub_total'] ?? 0);
+                                        $original_total_amount = $get('original_total_amount') ?? 0;
                                         $discount_percentage = ($original_total_amount > 0) ? ($discount_amount / $original_total_amount) * 100 : 0;
                                         $set('discount_percentage', $discount_percentage);
 
@@ -249,8 +254,7 @@ class SaleReturnResource extends Resource
                                     ->reactive()
                                     ->afterStateUpdated(function ($state, callable $set, callable $get) {
                                         $tax = $state ?? 0;
-                                        $original_total_amount = collect($get('saleReturnItems'))
-                                            ->sum(fn($item) => $item['sub_total'] ?? 0);
+                                        $original_total_amount = $get('original_total_amount') ?? 0;
                                         $total_with_discount = $original_total_amount - ($original_total_amount * ($get('discount_percentage') ?? 0) / 100);
                                         $tax_amount = ($total_with_discount * $tax) / 100;
                                         $set('tax_amount', $tax_amount);
@@ -262,8 +266,7 @@ class SaleReturnResource extends Resource
                                     ->reactive()
                                     ->afterStateUpdated(function ($state, callable $set, callable $get) {
                                         $tax_amount = $state ?? 0;
-                                        $original_total_amount = collect($get('saleReturnItems'))
-                                            ->sum(fn($item) => $item['sub_total'] ?? 0);
+                                        $original_total_amount = $get('original_total_amount') ?? 0;
                                         $discount_amount = $get('discount_amount') ?? 0;
                                         $total_with_discount = $original_total_amount - $discount_amount;
                                         $tax_percentage = ($total_with_discount > 0) ? ($tax_amount / $total_with_discount) * 100 : 0;
