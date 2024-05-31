@@ -18,6 +18,8 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 
+use function Laravel\Prompts\table;
+
 class SaleInvoiceResource extends Resource
 {
     protected static ?string $model = SaleInvoice::class;
@@ -36,6 +38,7 @@ class SaleInvoiceResource extends Resource
 
     public static function form(Form $form): Form
     {
+        $products = Product::get();
         return $form
             ->schema([
                 Forms\Components\Section::make()
@@ -71,9 +74,9 @@ class SaleInvoiceResource extends Resource
                             ->schema([
                                 Forms\Components\Select::make('product_id')
                                     ->relationship('product', 'name')
+                                    ->label('Select Product')
                                     ->required()
                                     ->searchable()
-                                    ->native(false)
                                     ->preload()
                                     ->reactive()
                                     ->afterStateUpdated(function ($state, callable $set, callable $get) {
@@ -187,7 +190,7 @@ class SaleInvoiceResource extends Resource
                     ]),
                 Section::make()
                     ->schema([
-                        Forms\Components\Section::make('Tax, Discount')
+                        Forms\Components\Section::make('Summary')
                             ->schema([
                                 Forms\Components\TextInput::make('discount_percentage')
                                     ->label('Discount %')
@@ -206,7 +209,7 @@ class SaleInvoiceResource extends Resource
                                         $set('total', $total_with_tax);
                                     }),
                                 Forms\Components\TextInput::make('discount_amount')
-                                    ->label('Discount Amount')
+                                    ->label('Disc. Amount')
                                     ->numeric()
                                     ->reactive()
                                     ->afterStateUpdated(function ($state, callable $set, callable $get) {
@@ -252,29 +255,26 @@ class SaleInvoiceResource extends Resource
                                         $total_with_tax = $total_with_discount + $tax_amount;
                                         $set('total', $total_with_tax);
                                     }),
-                            ])->columns(4),
-                        Forms\Components\Section::make('Additional Fields')
-                            ->schema([
                                 Forms\Components\TextInput::make('gross_amount')
-                                    ->required()
-                                    ->numeric()
-                                    ->readOnly()
-                                    ->reactive(),
-                                Forms\Components\TextInput::make('item_discount')
-                                    ->required()
-                                    ->numeric()
-                                    ->readOnly()
-                                    ->reactive(),
-                                Forms\Components\TextInput::make('original_total_amount')
-                                    ->numeric()
-                                    ->reactive()
-                                    ->hidden(),
-                                Forms\Components\TextInput::make('total')
-                                    ->required()
-                                    ->numeric()
-                                    ->reactive()
-                                    ->readOnly(),
-                            ])->columns(3),
+                                ->required()
+                                ->numeric()
+                                ->readOnly()
+                                ->reactive(),
+                            Forms\Components\TextInput::make('item_discount')
+                                ->required()
+                                ->numeric()
+                                ->readOnly()
+                                ->reactive(),
+                            Forms\Components\TextInput::make('original_total_amount')
+                                ->numeric()
+                                ->reactive()
+                                ->hidden(),
+                            Forms\Components\TextInput::make('total')
+                                ->required()
+                                ->numeric()
+                                ->reactive()
+                                ->readOnly(),
+                            ])->columns(7),
                     ]),
             ])->extraAttributes(['onkeydown' => 'return event.key != "Enter";']);
     }
