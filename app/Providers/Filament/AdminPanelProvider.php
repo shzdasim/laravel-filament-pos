@@ -43,7 +43,6 @@ class AdminPanelProvider extends PanelProvider
             ->id('app')
             ->path('app')
             ->login()
-            ->registration()
             ->passwordReset()
             ->emailVerification()
             ->profile(EditProfile::class,isSimple: false)

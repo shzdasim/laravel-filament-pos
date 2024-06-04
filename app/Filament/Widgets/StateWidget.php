@@ -6,29 +6,52 @@ use App\Models\PurchaseInvoiceItem;
 use App\Models\SaleInvoice;
 use Filament\Widgets\Concerns\InteractsWithPageFilters;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
-use Filament\Widgets\StatsOverviewWidget\Stat;
+use Filament\Widgets\StatsOverviewWidget\Card;
 use Illuminate\Support\Carbon;
 
 class StateWidget extends BaseWidget
 {
     use InteractsWithPageFilters;
-    
+
     protected static ?int $sort = 1;
 
-    protected function getStats(): array
+    protected function getCards(): array
     {
         $startDate = $this->getStartDate();
         $endDate = $this->getEndDate();
 
         $totalSales = SaleInvoice::whereBetween('date', [$startDate, $endDate])->sum('total');
         $totalPurchase = PurchaseInvoice::whereBetween('posted_date', [$startDate, $endDate])->sum('total_amount');
-
         $totalProfit = $this->calculateTotalProfit($startDate, $endDate);
+        $profitMarginPercentage = $totalSales > 0 ? ($totalProfit / $totalSales) * 100 : 0;
+        $totalSaleReturn = $this->calculateTotalSaleReturn($startDate, $endDate);
+        $totalGrossSale = $this->calculateTotalGrossSale($startDate, $endDate);
 
         return [
-            Stat::make('Total Sale', 'Rs. ' . number_format($totalSales, 2)),
-            Stat::make('Total Purchase', 'Rs. ' . number_format($totalPurchase, 2)),
-            Stat::make('Total Profit', 'Rs. ' . number_format($totalProfit, 2)),
+            Card::make('Total Sale', 'Rs. ' . number_format($totalSales, 2))
+                ->description('Total sales within the selected period')
+                ->color('primary')
+                ->icon('heroicon-o-currency-dollar'),
+            Card::make('Total Purchase', 'Rs. ' . number_format($totalPurchase, 2))
+                ->description('Total purchases within the selected period')
+                ->color('success')
+                ->icon('heroicon-o-receipt-percent'),
+            Card::make('Total Profit', 'Rs. ' . number_format($totalProfit, 2))
+                ->description('Net profit calculated')
+                ->color('success')
+                ->icon('heroicon-o-chart-pie'),
+            Card::make('Profit Margin (%)', number_format($profitMarginPercentage, 2) . '%')
+                ->description('Profit margin percentage')
+                ->color('info')
+                ->icon('heroicon-o-arrow-trending-up'),
+            Card::make('Sale Return', 'Rs. ' . number_format($totalSaleReturn, 2))
+                ->description('Total sale returns')
+                ->color('warning')
+                ->icon('heroicon-o-arrow-uturn-left'),
+            Card::make('Gross Sale', 'Rs. ' . number_format($totalGrossSale, 2))
+                ->description('Gross sales before discounts and returns')
+                ->color('gray')
+                ->icon('heroicon-o-arrow-trending-up'),
         ];
     }
 
@@ -41,13 +64,7 @@ class StateWidget extends BaseWidget
         $totalProfit = 0;
 
         foreach ($salesData as $saleInvoice) {
-            $grossSale = $saleInvoice->gross_amount;
-            $itemDiscount = $saleInvoice->item_discount;
-            $invoiceDiscount = $saleInvoice->discount_amount;
             $totalSale = $saleInvoice->total;
-
-            $saleReturn = $saleInvoice->saleReturns->sum('total');
-
             $costOfSale = $saleInvoice->saleInvoiceItems->sum(function ($saleItem) {
                 $remainingQuantity = $saleItem->quantity;
                 $totalCost = 0;
@@ -80,6 +97,21 @@ class StateWidget extends BaseWidget
         }
 
         return $totalProfit;
+    }
+
+    private function calculateTotalSaleReturn($startDate, $endDate)
+    {
+        return SaleInvoice::whereBetween('date', [$startDate, $endDate])
+            ->with('saleReturns')
+            ->get()
+            ->sum(function ($saleInvoice) {
+                return $saleInvoice->saleReturns->sum('total');
+            });
+    }
+
+    private function calculateTotalGrossSale($startDate, $endDate)
+    {
+        return SaleInvoice::whereBetween('date', [$startDate, $endDate])->sum('gross_amount');
     }
 
     protected function getStartDate(): Carbon
