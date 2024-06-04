@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Filament\Reports;
 
 use EightyNine\Reports\Report;
@@ -9,8 +8,6 @@ use EightyNine\Reports\Components\Header;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Form;
 use App\Models\SaleInvoice;
-use App\Models\SaleReturn;
-use App\Models\SaleInvoiceItem;
 use App\Models\PurchaseInvoiceItem;
 use Carbon\Carbon;
 use EightyNine\Reports\Components\Text;
@@ -66,14 +63,35 @@ class SaleReport extends Report
                                 $saleReturn = $items->sum(function ($item) {
                                     return $item->saleReturns->sum('total');
                                 });
-                                
+
                                 // Calculate cost of sale
                                 $costOfSale = $items->sum(function ($item) {
                                     return $item->saleInvoiceItems->sum(function ($saleItem) {
-                                        $purchaseItem = PurchaseInvoiceItem::where('product_id', $saleItem->product_id)
-                                            ->orderBy('purchase_invoice_id', 'desc')
-                                            ->first();
-                                        return $saleItem->quantity * ($purchaseItem->purchase_price ?? 0);
+                                        $remainingQuantity = $saleItem->quantity;
+                                        $totalCost = 0;
+
+                                        // Fetch corresponding purchase items in the order they were bought
+                                        $purchaseItems = PurchaseInvoiceItem::where('product_id', $saleItem->product_id)
+                                            ->orderBy('purchase_invoice_id', 'asc')
+                                            ->get();
+
+                                        foreach ($purchaseItems as $purchaseItem) {
+                                            if ($remainingQuantity <= 0) {
+                                                break;
+                                            }
+
+                                            $purchaseQuantity = $purchaseItem->quantity;
+                                            $quantityToConsider = min($remainingQuantity, $purchaseQuantity);
+                                            $remainingQuantity -= $quantityToConsider;
+
+                                            $purchasePrice = $purchaseItem->purchase_price;
+                                            $purchaseDiscount = $purchasePrice * $purchaseItem->item_discount_percentage / 100;
+                                            $purchaseTax = $purchasePrice * $purchaseItem->purchaseInvoice->tax_percentage / 100;
+
+                                            $totalCost += ($purchasePrice - $purchaseDiscount + $purchaseTax) * $quantityToConsider;
+                                        }
+
+                                        return $totalCost;
                                     });
                                 });
 
