@@ -1,7 +1,6 @@
 <?php
 
 namespace App\Filament\Reports;
-
 use EightyNine\Reports\Report;
 use EightyNine\Reports\Components\Body;
 use EightyNine\Reports\Components\Footer;
@@ -17,7 +16,6 @@ use EightyNine\Reports\Components\Text;
 
 class PurchaseOrderReport extends Report
 {
-
     public function header(Header $header): Header
     {
         return $header

@@ -37,7 +37,6 @@ class AdminPanelProvider extends PanelProvider
         // Concatenate the name and license for the brand name
         $brandName = $applicationName;
         
-
         return $panel
             ->default()
             ->id('app')
@@ -45,7 +44,7 @@ class AdminPanelProvider extends PanelProvider
             ->login()
             ->passwordReset()
             ->emailVerification()
-            ->profile(EditProfile::class,isSimple: false)
+            ->profile(EditProfile::class, isSimple: false)
             ->brandName("$brandName", "$applicationLogoUrl")
             ->font('Poppins')
             ->colors([
@@ -56,13 +55,12 @@ class AdminPanelProvider extends PanelProvider
                 'success' => Color::Emerald,
                 'warning' => Color::Orange,
             ])
-
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
+            ->discoverClusters(in: app_path('Filament/Clusters'), for: 'App\\Filament\\Clusters')
             ->pages([])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
-            ->widgets([
-            ])
+            ->widgets([])
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,
@@ -80,6 +78,7 @@ class AdminPanelProvider extends PanelProvider
             ->plugins([
                 ReportsPlugin::make()
             ])
-            ->sidebarCollapsibleOnDesktop() ;
+            ->sidebarCollapsibleOnDesktop()
+            ->breadcrumbs(false);
     }
 }
