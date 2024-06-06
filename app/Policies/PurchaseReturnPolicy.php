@@ -32,4 +32,9 @@ class PurchaseReturnPolicy
     {
         return $user->hasPermission('View PurchaseReturn');
     }
+    public function deleteAny(User $user): bool
+{
+    return $user->hasPermission('Delete PurchaseReturn');
+}
+
 }

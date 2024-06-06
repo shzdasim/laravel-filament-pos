@@ -3,10 +3,12 @@
 namespace App\Filament\Resources;
 
 use App\Exceptions\ProductDeletionException;
+use App\Filament\Imports\ProductImporter;
 use App\Filament\Resources\ProductResource\Pages;
 use App\Filament\Resources\ProductResource\RelationManagers;
 use App\Models\Product;
 use App\Models\User;
+use Filament\Actions\ImportAction;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -17,6 +19,8 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use Filament\Notifications\Notification ;
+use App\Filament\Imports\ProductsImport;
+use Filament\Tables\Actions\ImportAction as ActionsImportAction;
 
 class ProductResource extends Resource
 {
@@ -144,6 +148,11 @@ class ProductResource extends Resource
                     }),
                 ])
                 ->visible(fn (User $user, $record) => $user->can('delete', $record)),
+            ])
+            ->headerActions([
+                ActionsImportAction::make()
+                    ->importer(ProductImporter::class)
+                    ->label('Import Products'),
             ]);
     }
 
