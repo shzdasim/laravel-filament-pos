@@ -8,26 +8,30 @@ class UserPolicy
 {
     public function viewAny(User $user): bool
     {
-        return $user->hasPermission('view_users');
+        return $user->hasPermission('View Users');
     }
 
     public function create(User $user): bool
     {
-        return $user->hasPermission('create_users');
+        return $user->hasPermission('Create Users');
     }
 
     public function update(User $user, User $model): bool
     {
-        return $user->hasPermission('edit_users');
+        return $user->hasPermission('Edit Users');
     }
 
     public function delete(User $user, User $model): bool
     {
-        return $user->hasPermission('delete_users') && $user->id !== $model->id;
+        return $user->hasPermission('Delete Users') && $user->id !== $model->id;
     }
 
     public function view(User $user, User $model): bool
     {
-        return $user->hasPermission('view_users');
+        return $user->hasPermission('View Users');
+    }
+    public function deleteAny(User $user): bool
+    {
+        return $user->hasPermission('Delete Users');
     }
 }

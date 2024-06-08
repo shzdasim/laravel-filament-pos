@@ -10,26 +10,30 @@ class SaleInvoicePolicy
 {
     public function viewAny(User $user): bool
     {
-        return $user->hasPermission('view_saleinvoices');
+        return $user->hasPermission('View SaleInvoices');
     }
 
     public function create(User $user): bool
     {
-        return $user->hasPermission('create_saleinvoices');
+        return $user->hasPermission('Create SaleInvoices');
     }
 
     public function update(User $user, SaleInvoice $model): bool
     {
-        return $user->hasPermission('edit_saleinvoices');
+        return $user->hasPermission('Edit SaleInvoices');
     }
 
     public function delete(User $user, SaleInvoice $model): bool
     {
-        return $user->hasPermission('delete_saleinvoices');
+        return $user->hasPermission('Delete SaleInvoices');
     }
 
     public function view(User $user, SaleInvoice $model): bool
     {
-        return $user->hasPermission('view_saleinvoices');
+        return $user->hasPermission('View SaleInvoices');
+    }
+    public function deleteAny(User $user): bool
+    {
+        return $user->hasPermission('Delete SaleInvoices');
     }
 }

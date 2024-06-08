@@ -10,26 +10,30 @@ class PurchaseInvoicePolicy
 {
     public function viewAny(User $user): bool
     {
-        return $user->hasPermission('view_purchaseinvoices');
+        return $user->hasPermission('View PurchaseInvoices');
     }
 
     public function create(User $user): bool
     {
-        return $user->hasPermission('create_purchaseinvoices');
+        return $user->hasPermission('Create PurchaseInvoices');
     }
 
     public function update(User $user, PurchaseInvoice $model): bool
     {
-        return $user->hasPermission('edit_purchaseinvoices');
+        return $user->hasPermission('Edit PurchaseInvoices');
     }
 
     public function delete(User $user, PurchaseInvoice $model): bool
     {
-        return $user->hasPermission('delete_purchaseinvoices');
+        return $user->hasPermission('Delete PurchaseInvoices');
     }
 
     public function view(User $user, PurchaseInvoice $model): bool
     {
-        return $user->hasPermission('view_purchaseinvoices');
+        return $user->hasPermission('View PurchaseInvoices');
+    }
+    public function deleteAny(User $user): bool
+    {
+        return $user->hasPermission('Delete PurchaseInvoices');
     }
 }

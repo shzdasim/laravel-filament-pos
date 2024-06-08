@@ -13,6 +13,7 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Support\Facades\Gate;
 
 class UserResource extends Resource
 {
@@ -53,6 +54,14 @@ class UserResource extends Resource
 
     public static function table(Table $table): Table
     {
+        $bulkActions = [
+            Tables\Actions\DeleteBulkAction::make(),
+        ];
+
+        // Conditionally remove the bulk delete action if the user does not have the delete permission
+        if (!Gate::allows('deleteAny', User::class)) {
+            $bulkActions = [];
+        }
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('name')
@@ -78,11 +87,7 @@ class UserResource extends Resource
                 Tables\Actions\DeleteAction::make(),
 
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                ])->visible(fn (User $user, $record) => $user->can('delete', $record)),
-            ]);
+            ->bulkActions($bulkActions);
     }
 
     public static function getRelations(): array

@@ -15,6 +15,7 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Support\Facades\Gate;
 
 class SupplierResource extends Resource
 {
@@ -47,6 +48,29 @@ class SupplierResource extends Resource
 
     public static function table(Table $table): Table
     {
+        $bulkActions = [
+            Tables\Actions\BulkActionGroup::make([
+                Tables\Actions\DeleteBulkAction::make()
+                ->action(function ($records) {
+                    foreach ($records as $record) {
+                        try {
+                            $record->delete();
+                        } catch (SupplierDeletionException $e) {
+                            Notification::make()
+                                ->title('Deletion Failed')
+                                ->body($e->getMessage())
+                                ->danger()
+                                ->send();
+                        }
+                    }
+                }),
+            ])
+        ];
+
+        // Conditionally remove the bulk delete action if the user does not have the delete permission
+        if (!Gate::allows('deleteAny', Supplier::class)) {
+            $bulkActions = [];
+        }
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('name')
@@ -72,24 +96,7 @@ class SupplierResource extends Resource
                 Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make()
-                    ->action(function ($records) {
-                        foreach ($records as $record) {
-                            try {
-                                $record->delete();
-                            } catch (SupplierDeletionException $e) {
-                                Notification::make()
-                                    ->title('Deletion Failed')
-                                    ->body($e->getMessage())
-                                    ->danger()
-                                    ->send();
-                            }
-                        }
-                    }),
-                ])->visible(fn (User $user, $record) => $user->can('delete', $record)),
-            ]);
+            ->bulkActions($bulkActions);
     }
 
     public static function getRelations(): array

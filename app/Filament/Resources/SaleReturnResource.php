@@ -17,6 +17,7 @@ use Filament\Forms\Get;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Support\Facades\Gate;
 
 class SaleReturnResource extends Resource
 {
@@ -290,6 +291,14 @@ class SaleReturnResource extends Resource
 
     public static function table(Table $table): Table
     {
+        $bulkActions = [
+            Tables\Actions\DeleteBulkAction::make(),
+        ];
+
+        // Conditionally remove the bulk delete action if the user does not have the delete permission
+        if (!Gate::allows('deleteAny', SaleReturn::class)) {
+            $bulkActions = [];
+        }
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('posted_number'),
@@ -307,9 +316,7 @@ class SaleReturnResource extends Resource
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\DeleteBulkAction::make(),
-            ]);
+            ->bulkActions($bulkActions);
     }
 
     public static function getRelations(): array

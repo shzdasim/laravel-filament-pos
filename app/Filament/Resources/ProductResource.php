@@ -21,6 +21,7 @@ use Illuminate\Validation\ValidationException;
 use Filament\Notifications\Notification ;
 use App\Filament\Imports\ProductsImport;
 use Filament\Tables\Actions\ImportAction as ActionsImportAction;
+use Illuminate\Support\Facades\Gate;
 
 class ProductResource extends Resource
 {
@@ -79,13 +80,39 @@ class ProductResource extends Resource
                 Forms\Components\TextInput::make('max_discount')
                     ->numeric()
                     ->readOnly(),
-                ])->columns(5),
+                    Forms\Components\TextInput::make('margin')
+                    ->numeric()
+                    ->readOnly(),
+                ])->columns(6),
                 
             ]);
     }
 
     public static function table(Table $table): Table
     {
+        $bulkActions = [
+            Tables\Actions\BulkActionGroup::make([
+                Tables\Actions\DeleteBulkAction::make()
+                ->action(function ($records) {
+                    foreach ($records as $record) {
+                        try {
+                            $record->delete();
+                        } catch (ProductDeletionException $e) {
+                            Notification::make()
+                                ->title('Deletion Failed')
+                                ->body($e->getMessage())
+                                ->danger()
+                                ->send();
+                        }
+                    }
+                }),
+            ])
+        ];
+
+        // Conditionally remove the bulk delete action if the user does not have the delete permission
+        if (!Gate::allows('deleteAny', Product::class)) {
+            $bulkActions = [];
+        }
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('code')
@@ -130,25 +157,7 @@ class ProductResource extends Resource
                 Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make()
-                    ->action(function ($records) {
-                        foreach ($records as $record) {
-                            try {
-                                $record->delete();
-                            } catch (ProductDeletionException $e) {
-                                Notification::make()
-                                    ->title('Deletion Failed')
-                                    ->body($e->getMessage())
-                                    ->danger()
-                                    ->send();
-                            }
-                        }
-                    }),
-                ])
-                ->visible(fn (User $user, $record) => $user->can('delete', $record)),
-            ])
+            ->bulkActions($bulkActions)
             ->headerActions([
                 ActionsImportAction::make()
                     ->importer(ProductImporter::class)

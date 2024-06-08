@@ -10,26 +10,30 @@ class ProductPolicy
 {
     public function viewAny(User $user): bool
     {
-        return $user->hasPermission('view_products');
+        return $user->hasPermission('View Products');
     }
 
     public function create(User $user): bool
     {
-        return $user->hasPermission('create_products');
+        return $user->hasPermission('Create Products');
     }
 
     public function update(User $user, Product $model): bool
     {
-        return $user->hasPermission('update_products');
+        return $user->hasPermission('Edit Products');
     }
 
     public function delete(User $user, Product $model): bool
     {
-        return $user->hasPermission('delete_products');
+        return $user->hasPermission('Delete Products');
     }
 
     public function view(User $user, Product $model): bool
     {
-        return $user->hasPermission('view_products');
+        return $user->hasPermission('View Products');
+    }
+    public function deleteAny(User $user): bool
+    {
+        return $user->hasPermission('Delete Products');
     }
 }

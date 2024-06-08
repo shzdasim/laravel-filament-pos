@@ -10,26 +10,30 @@ class CategoryPolicy
 {
     public function viewAny(User $user): bool
     {
-        return $user->hasPermission('view_categories');
+        return $user->hasPermission('View Categories');
     }
 
     public function create(User $user): bool
     {
-        return $user->hasPermission('create_categories');
+        return $user->hasPermission('Create Categories');
     }
 
     public function update(User $user, Category $model): bool
     {
-        return $user->hasPermission('edit_categories');
+        return $user->hasPermission('Edit Categories');
     }
 
     public function delete(User $user, Category $model): bool
     {
-        return $user->hasPermission('delete_categories');
+        return $user->hasPermission('Delete Categories');
     }
 
     public function view(User $user, Category $model): bool
     {
-        return $user->hasPermission('view_categories');
+        return $user->hasPermission('View Categories');
+    }
+    public function deleteAny(User $user): bool
+    {
+        return $user->hasPermission('Delete Categories');
     }
 }

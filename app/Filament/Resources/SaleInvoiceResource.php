@@ -6,8 +6,9 @@ use App\Filament\Resources\SaleInvoiceResource\Pages;
 use App\Models\Customer;
 use App\Models\Product;
 use App\Models\SaleInvoice;
-use App\Models\User;
+use App\Models\SaleReturn;
 use Closure;
+use Filament\Actions\Action;
 use Filament\Forms;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Section;
@@ -17,8 +18,7 @@ use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-
-use function Laravel\Prompts\table;
+use Illuminate\Support\Facades\Gate;
 
 class SaleInvoiceResource extends Resource
 {
@@ -85,18 +85,15 @@ class SaleInvoiceResource extends Resource
                                             if ($product) {
                                                 $set('current_quantity', $product->quantity);
                                                 $set('price', $product->sale_price);
+                                                $set('../../product_margin', $product->margin); // Update the margin in summary section
                                             } else {
                                                 $set('current_quantity', 0);
                                                 $set('price', 0);
+                                                $set('../../product_margin', null); // Reset the margin in summary section
                                             }
                                         }
                                     })
-                                    ->disableOptionWhen(function ($value, $state, Get $get) {
-                                        return collect($get('../*.product_id'))
-                                            ->reject(fn($id) => $id == $state)
-                                            ->filter()
-                                            ->contains($value);
-                                    })
+                                    ->disableOptionsWhenSelectedInSiblingRepeaterItems()
                                     ->columnSpan(3),
                                 Forms\Components\TextInput::make('current_quantity')
                                     ->label('CURRENT.Q')
@@ -186,7 +183,8 @@ class SaleInvoiceResource extends Resource
                                     ->numeric()
                                     ->readOnly(),
                             ])->columns(8)
-                            ->reactive(),
+                            ->reactive()
+                            ->addActionLabel('Add Product'),
                     ]),
                 Section::make()
                     ->schema([
@@ -256,31 +254,45 @@ class SaleInvoiceResource extends Resource
                                         $set('total', $total_with_tax);
                                     }),
                                 Forms\Components\TextInput::make('gross_amount')
-                                ->required()
-                                ->numeric()
-                                ->readOnly()
-                                ->reactive(),
-                            Forms\Components\TextInput::make('item_discount')
-                                ->required()
-                                ->numeric()
-                                ->readOnly()
-                                ->reactive(),
-                            Forms\Components\TextInput::make('original_total_amount')
-                                ->numeric()
-                                ->reactive()
-                                ->hidden(),
-                            Forms\Components\TextInput::make('total')
-                                ->required()
-                                ->numeric()
-                                ->reactive()
-                                ->readOnly(),
-                            ])->columns(7),
+                                    ->label('G. Amnt')
+                                    ->required()
+                                    ->numeric()
+                                    ->readOnly()
+                                    ->reactive(),
+                                Forms\Components\TextInput::make('item_discount')
+                                    ->label('Item Disc')
+                                    ->required()
+                                    ->numeric()
+                                    ->readOnly()
+                                    ->reactive(),
+                                Forms\Components\TextInput::make('original_total_amount')
+                                    ->numeric()
+                                    ->reactive()
+                                    ->hidden(),
+                                Forms\Components\TextInput::make('total')
+                                    ->required()
+                                    ->numeric()
+                                    ->reactive()
+                                    ->readOnly(),
+                                Forms\Components\TextInput::make('product_margin')
+                                    ->label('Margin')
+                                    ->readOnly()
+                                    ->numeric(),
+                            ])->columns(8),
                     ]),
             ])->extraAttributes(['onkeydown' => 'return event.key != "Enter";']);
     }
 
     public static function table(Table $table): Table
     {
+        $bulkActions = [
+            Tables\Actions\DeleteBulkAction::make(),
+        ];
+
+        // Conditionally remove the bulk delete action if the user does not have the delete permission
+        if (!Gate::allows('deleteAny', SaleReturn::class)) {
+            $bulkActions = [];
+        }
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('user.name')
@@ -320,11 +332,7 @@ class SaleInvoiceResource extends Resource
                 Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                ])->visible(fn (User $user, $record) => $user->can('delete', $record)),
-            ]);
+            ->bulkActions($bulkActions);
     }
 
     public static function getRelations(): array
