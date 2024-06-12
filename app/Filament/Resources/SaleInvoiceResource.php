@@ -19,6 +19,7 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Log;
 
 class SaleInvoiceResource extends Resource
 {
@@ -36,9 +37,11 @@ class SaleInvoiceResource extends Resource
     protected static ?string $modelLabel = 'Sale Invoice';
     protected static ?int $navigationSort = 1;
 
+
     public static function form(Form $form): Form
     {
-        $products = Product::get();
+        $products = Product::all();
+
         return $form
             ->schema([
                 Forms\Components\Section::make()
@@ -73,12 +76,46 @@ class SaleInvoiceResource extends Resource
                             ->label('Sale Invoice Items')
                             ->schema([
                                 Forms\Components\Select::make('product_id')
-                                    ->relationship('product', 'name')
                                     ->label('Select Product')
                                     ->required()
                                     ->searchable()
                                     ->preload()
                                     ->reactive()
+                                    ->allowHtml()
+                                    ->getSearchResultsUsing(function (string $search = null) {
+                                        $query = Product::query();                                       
+                                        if ($search) {
+                                            $query->where('name', 'like', "%{$search}%")
+                                                ->orWhere('quantity', 'like', "%{$search}%")
+                                                ->orWhere('sale_price', 'like', "%{$search}%")
+                                                ->orWhere('purchase_price', 'like', "%{$search}%")
+                                                ->orWhere('avg_price', 'like', "%{$search}%");
+                                        }
+                                        return $query->get()
+                                            ->mapWithKeys(function ($product) {
+                                                return [$product->id => "
+                                                    <div>
+                                                        <strong>{$product->name}</strong><br>
+                                                        <span>Quantity: {$product->quantity}</span><br>
+                                                        <span>Sale Price: {$product->sale_price}</span><br>
+                                                        <span>Purchase Price: {$product->purchase_price}</span><br>
+                                                        <span>Avg Price: {$product->avg_price}</span>
+                                                    </div>
+                                                "];
+                                            });
+                                    })
+                                    ->getOptionLabelUsing(function ($value) {
+                                        $product = Product::find($value);
+                                        return $product ? "
+                                            <div>
+                                                <strong>{$product->name}</strong><br>
+                                                <span>Quantity: {$product->quantity}</span><br>
+                                                <span>Sale Price: {$product->sale_price}</span><br>
+                                                <span>Purchase Price: {$product->purchase_price}</span><br>
+                                                <span>Avg Price: {$product->avg_price}</span>
+                                            </div>
+                                        " : '';
+                                    })
                                     ->afterStateUpdated(function ($state, callable $set, callable $get) {
                                         if ($state) {
                                             $product = Product::find($state);
@@ -95,6 +132,7 @@ class SaleInvoiceResource extends Resource
                                     })
                                     ->disableOptionsWhenSelectedInSiblingRepeaterItems()
                                     ->columnSpan(3),
+
                                 Forms\Components\TextInput::make('current_quantity')
                                     ->label('CURRENT.Q')
                                     ->required()

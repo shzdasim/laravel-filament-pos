@@ -9,6 +9,7 @@ use App\Models\Product;
 use App\Models\PurchaseInvoice;
 use App\Models\User;
 use Closure;
+use Filament\Actions\Action;
 use Filament\Forms;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Section;
@@ -311,7 +312,11 @@ class PurchaseInvoiceResource extends Resource
                                    }),
                            ])
                            ->columns(10)
-                           ->reactive(),
+                           ->reactive()
+                           ->extraAttributes([
+                            'x-data' => '{}',
+                            'x-init' => '$nextTick(() => { document.addEventListener("keydown", (event) => { if (event.metaKey && event.key === "n") { event.preventDefault(); $dispatch("repeater::addItem", "purchaseInvoiceItems"); } }); })'
+                        ]),
                    ]),
                Forms\Components\Section::make('Tax, Discount, Total')
                    ->schema([
