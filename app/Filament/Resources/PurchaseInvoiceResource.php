@@ -123,6 +123,7 @@ class PurchaseInvoiceResource extends Resource
                                    ->required()
                                    ->reactive()
                                    ->numeric()
+                                   ->debounce(500) // Debounce added here
                                    ->afterStateUpdated(function ($state, callable $set, callable $get) {
                                        $purchase_price = (float) $get('purchase_price') ?? 0;
                                        $item_discount = (float) $get('item_discount_percentage') ?? 0;
@@ -171,6 +172,7 @@ class PurchaseInvoiceResource extends Resource
                                    ->required()
                                    ->reactive()
                                    ->numeric()
+                                   ->debounce(500) // Debounce added here
                                    ->afterStateUpdated(function ($state, callable $set, callable $get) {
                                        $purchase_price = (float) $state ?? 0;
                                        $quantity = (int) $get('quantity') ?? 0;
@@ -217,6 +219,7 @@ class PurchaseInvoiceResource extends Resource
                                Forms\Components\TextInput::make('sale_price')
                                    ->required()
                                    ->numeric()
+                                   ->debounce(500) // Debounce added here
                                    ->afterStateUpdated(function ($state, callable $set, callable $get) {
                                        // Calculate margin (profit in %) and avg_price
                                        $purchase_price = (float) $get('purchase_price') ?? 0;
@@ -245,6 +248,7 @@ class PurchaseInvoiceResource extends Resource
                                    ->label('disc%')
                                    ->reactive()
                                    ->numeric()
+                                   ->debounce(500) // Debounce added here
                                    ->afterStateUpdated(function ($state, callable $set, callable $get) {
                                        $item_discount = (float) $state ?? 0;
                                        $purchase_price = (float) $get('purchase_price') ?? 0;
@@ -324,6 +328,7 @@ class PurchaseInvoiceResource extends Resource
                            ->label('Tax%')
                            ->numeric()
                            ->reactive()
+                           ->debounce(500) // Debounce added here
                            ->afterStateUpdated(function($state, callable $set, callable $get) {
                                $tax = (float) $state ?? 0;
                                $original_total_amount = collect($get('purchaseInvoiceItems'))
@@ -340,6 +345,7 @@ class PurchaseInvoiceResource extends Resource
                            ->label('Tax Amount')
                            ->numeric()
                            ->reactive()
+                           ->debounce(500) // Debounce added here
                            ->afterStateUpdated(function ($state, callable $set, callable $get) {
                                $tax_amount = (float) $state ?? 0;
                                $original_total_amount = collect($get('purchaseInvoiceItems'))
@@ -357,6 +363,7 @@ class PurchaseInvoiceResource extends Resource
                            ->label('Discount %')
                            ->numeric()
                            ->reactive()
+                           ->debounce(500) // Debounce added here
                            ->afterStateUpdated(function($state, callable $set, callable $get) {
                                $discount = (float) $state ?? 0;
                                $original_total_amount = collect($get('purchaseInvoiceItems'))
@@ -374,6 +381,7 @@ class PurchaseInvoiceResource extends Resource
                            ->label('Discount Amount')
                            ->numeric()
                            ->reactive()
+                           ->debounce(500) // Debounce added here
                            ->afterStateUpdated(function ($state, callable $set, callable $get) {
                                $discount_amount = (float) $state ?? 0;
                                $original_total_amount = collect($get('purchaseInvoiceItems'))

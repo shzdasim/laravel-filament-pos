@@ -14,6 +14,12 @@ class ViewSaleInvoice extends ViewRecord
     {
         return [
             Actions\EditAction::make(),
+            Actions\Action::make('print')
+                ->label('Print Invoice')
+                ->color('warning')
+                ->url(route('sale-invoices.print', ['record' => $this->record->getKey()]))
+                ->openUrlInNewTab()
+                ->icon('heroicon-o-printer'),
         ];
     }
 }
