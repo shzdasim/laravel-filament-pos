@@ -1,1 +1,2 @@
-# Laravel Filament POS
+# laravel-filament-pos
+ 
