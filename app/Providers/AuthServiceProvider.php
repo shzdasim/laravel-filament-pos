@@ -21,7 +21,6 @@ use App\Policies\SaleInvoicePolicy;
 use App\Policies\SaleReturnPolicy;
 use App\Policies\SupplierPolicy;
 use App\Policies\UserPolicy;
-use Illuminate\Auth\Access\Gate;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 
 class AuthServiceProvider extends ServiceProvider

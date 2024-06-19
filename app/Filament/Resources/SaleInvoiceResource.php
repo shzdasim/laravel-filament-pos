@@ -82,8 +82,13 @@ class SaleInvoiceResource extends Resource
                                     ->preload()
                                     ->reactive()
                                     ->allowHtml()
+                                    ->getOptionLabelUsing(function ($value) {
+                                        $product = Product::find($value);
+                                        return $product ? $product->name : '';
+                                    })
                                     ->getSearchResultsUsing(function (string $search = null) {
-                                        $query = Product::query();                                       
+                                        $query = Product::query();
+                                        
                                         if ($search) {
                                             $query->where('name', 'like', "%{$search}%")
                                                 ->orWhere('quantity', 'like', "%{$search}%")
@@ -91,6 +96,7 @@ class SaleInvoiceResource extends Resource
                                                 ->orWhere('purchase_price', 'like', "%{$search}%")
                                                 ->orWhere('avg_price', 'like', "%{$search}%");
                                         }
+                                
                                         return $query->get()
                                             ->mapWithKeys(function ($product) {
                                                 return [$product->id => "
@@ -103,18 +109,6 @@ class SaleInvoiceResource extends Resource
                                                     </div>
                                                 "];
                                             });
-                                    })
-                                    ->getOptionLabelUsing(function ($value) {
-                                        $product = Product::find($value);
-                                        return $product ? "
-                                            <div>
-                                                <strong>{$product->name}</strong><br>
-                                                <span>Quantity: {$product->quantity}</span><br>
-                                                <span>Sale Price: {$product->sale_price}</span><br>
-                                                <span>Purchase Price: {$product->purchase_price}</span><br>
-                                                <span>Avg Price: {$product->avg_price}</span>
-                                            </div>
-                                        " : '';
                                     })
                                     ->afterStateUpdated(function ($state, callable $set, callable $get) {
                                         if ($state) {
@@ -142,6 +136,7 @@ class SaleInvoiceResource extends Resource
                                     ->required()
                                     ->numeric()
                                     ->reactive()
+                                    ->debounce(500) // Debounce added here
                                     ->afterStateUpdated(function ($state, callable $set, callable $get) {
                                         $current_quantity = $get('current_quantity') ?? 0;
                                         $price = $get('price') ?? 0;
@@ -154,12 +149,12 @@ class SaleInvoiceResource extends Resource
 
                                         // Calculate gross amount and item discount
                                         $gross_amount = collect($get('../../saleInvoiceItems'))
-                                            ->sum(fn($item) => ($item['price'] ?? 0) * ($item['quantity'] ?? 0));
+                                            ->sum(fn($item) => floatval($item['price'] ?? 0) * floatval($item['quantity'] ?? 0));
                                         $item_discount_total = collect($get('../../saleInvoiceItems'))
-                                            ->sum(fn($item) => (($item['price'] ?? 0) * ($item['quantity'] ?? 0) * ($item['item_discount_percentage'] ?? 0)) / 100);
+                                            ->sum(fn($item) => (floatval($item['price'] ?? 0) * floatval($item['quantity'] ?? 0) * floatval($item['item_discount_percentage'] ?? 0)) / 100);
 
                                         $total_amount = collect($get('../../saleInvoiceItems'))
-                                            ->sum(fn($item) => $item['sub_total'] ?? 0);
+                                            ->sum(fn($item) => floatval($item['sub_total'] ?? 0));
 
                                         $set('../../gross_amount', $gross_amount);
                                         $set('../../item_discount', $item_discount_total);
@@ -188,6 +183,7 @@ class SaleInvoiceResource extends Resource
                                     ->numeric()
                                     ->default(0)
                                     ->reactive()
+                                    ->debounce(500) // Debounce added here
                                     ->afterStateUpdated(function ($state, callable $set, callable $get) {
                                         $item_discount = $state ?? 0;
                                         $price = $get('price') ?? 0;
@@ -199,12 +195,12 @@ class SaleInvoiceResource extends Resource
 
                                         // Calculate gross amount and item discount
                                         $gross_amount = collect($get('../../saleInvoiceItems'))
-                                            ->sum(fn($item) => ($item['price'] ?? 0) * ($item['quantity'] ?? 0));
+                                            ->sum(fn($item) => floatval($item['price'] ?? 0) * floatval($item['quantity'] ?? 0));
                                         $item_discount_total = collect($get('../../saleInvoiceItems'))
-                                            ->sum(fn($item) => (($item['price'] ?? 0) * ($item['quantity'] ?? 0) * ($item['item_discount_percentage'] ?? 0)) / 100);
+                                            ->sum(fn($item) => (floatval($item['price'] ?? 0) * floatval($item['quantity'] ?? 0) * floatval($item['item_discount_percentage'] ?? 0)) / 100);
 
                                         $total_amount = collect($get('../../saleInvoiceItems'))
-                                            ->sum(fn($item) => $item['sub_total'] ?? 0);
+                                            ->sum(fn($item) => floatval($item['sub_total'] ?? 0));
 
                                         $set('../../gross_amount', $gross_amount);
                                         $set('../../item_discount', $item_discount_total);
@@ -232,10 +228,11 @@ class SaleInvoiceResource extends Resource
                                     ->label('Discount %')
                                     ->numeric()
                                     ->reactive()
+                                    ->debounce(500) // Debounce added here
                                     ->afterStateUpdated(function ($state, callable $set, callable $get) {
                                         $discount = $state ?? 0;
                                         $original_total_amount = collect($get('saleInvoiceItems'))
-                                            ->sum(fn($item) => $item['sub_total'] ?? 0);
+                                            ->sum(fn($item) => floatval($item['sub_total'] ?? 0));
                                         $discount_amount = ($original_total_amount * $discount) / 100;
                                         $set('discount_amount', $discount_amount);
 
@@ -248,10 +245,11 @@ class SaleInvoiceResource extends Resource
                                     ->label('Disc. Amount')
                                     ->numeric()
                                     ->reactive()
+                                    ->debounce(500) // Debounce added here
                                     ->afterStateUpdated(function ($state, callable $set, callable $get) {
                                         $discount_amount = $state ?? 0;
                                         $original_total_amount = collect($get('saleInvoiceItems'))
-                                            ->sum(fn($item) => $item['sub_total'] ?? 0);
+                                            ->sum(fn($item) => floatval($item['sub_total'] ?? 0));
                                         $discount_percentage = ($original_total_amount > 0) ? ($discount_amount / $original_total_amount) * 100 : 0;
                                         $set('discount_percentage', $discount_percentage);
 
@@ -264,10 +262,11 @@ class SaleInvoiceResource extends Resource
                                     ->label('Tax %')
                                     ->numeric()
                                     ->reactive()
+                                    ->debounce(500) // Debounce added here
                                     ->afterStateUpdated(function ($state, callable $set, callable $get) {
                                         $tax = $state ?? 0;
                                         $original_total_amount = collect($get('saleInvoiceItems'))
-                                            ->sum(fn($item) => $item['sub_total'] ?? 0);
+                                            ->sum(fn($item) => floatval($item['sub_total'] ?? 0));
                                         $total_with_discount = $original_total_amount - ($original_total_amount * ($get('discount_percentage') ?? 0) / 100);
                                         $tax_amount = ($total_with_discount * $tax) / 100;
                                         $set('tax_amount', $tax_amount);
@@ -279,10 +278,11 @@ class SaleInvoiceResource extends Resource
                                     ->label('Tax Amount')
                                     ->numeric()
                                     ->reactive()
+                                    ->debounce(500) // Debounce added here
                                     ->afterStateUpdated(function ($state, callable $set, callable $get) {
                                         $tax_amount = $state ?? 0;
                                         $original_total_amount = collect($get('saleInvoiceItems'))
-                                            ->sum(fn($item) => $item['sub_total'] ?? 0);
+                                            ->sum(fn($item) => floatval($item['sub_total'] ?? 0));
                                         $discount_amount = $get('discount_amount') ?? 0;
                                         $total_with_discount = $original_total_amount - $discount_amount;
                                         $tax_percentage = ($total_with_discount > 0) ? ($tax_amount / $total_with_discount) * 100 : 0;
