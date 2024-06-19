@@ -59,17 +59,22 @@ A point-of-sale (POS) application built with Laravel and Filament.
 
 ## Key Features
 
+### Dashboard
+An intuitive dashboard providing quick access to key metrics such as total sales, total purchases, inventory status, and recent transactions. Visualize data through graphs and charts for better insights.
+
+
 ### User Management
-Manage users with different roles and permissions. Admins can create, update, and delete user accounts, and assign roles such as cashier, manager, and admin.
+Manage users with different permissions rather than roles. Admins can create, update, and delete user accounts, and assign specific permissions to control access to various parts of the application. Permissions include:
+- Create, Edit, Delete, and View for Applications, Users, SaleInvoices, PurchaseInvoices, Products, Categories, Suppliers, Customers, SaleReturns, and PurchaseReturns.
 
 ### Product Management
-Add, update, and remove products from the inventory. Manage product details including name, SKU, price, and stock levels.
+Add, update, and remove products from the inventory. Manage product details including name, SKU, price, and stock levels. Organize products into categories for better management.
 
 ### Sales Management
-Handle sales transactions efficiently. Generate sales invoices for customer purchases, apply discounts, and manage payment methods.
+Handle sales transactions efficiently. Generate sales invoices for customer purchases, apply discounts, and manage payment methods. Track sales history and customer information.
 
 ### Purchase Management
-Manage purchase orders and supplier interactions. Create and update purchase invoices when stocking up inventory from suppliers.
+Manage purchase orders and supplier interactions. Create and update purchase invoices when stocking up inventory from suppliers. Track purchase history and supplier information.
 
 ### Sales Return
 Process returns from customers. Generate sales return invoices to manage and track returned products and issue refunds or store credits.
@@ -80,8 +85,6 @@ Handle returns to suppliers. Generate purchase return invoices for products retu
 ### Reporting
 Generate comprehensive reports for sales, purchases, inventory levels, and returns. Use these reports to analyze business performance and make informed decisions.
 
-### Dashboard
-An intuitive dashboard providing quick access to key metrics such as total sales, total purchases, inventory status, and recent transactions. Visualize data through graphs and charts for better insights.
 
 ## Contributing
 
