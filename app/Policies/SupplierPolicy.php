@@ -10,7 +10,7 @@ class SupplierPolicy
 {
     public function viewAny(User $user): bool
     {
-        return $user->hasPermission('view_suppliers');
+        return $user->hasPermission('View Suppliers');
     }
 
     public function create(User $user): bool
