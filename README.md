@@ -66,7 +66,7 @@ Manage users with different permissions rather than roles. Admins can create, up
 ### Product Management
 Add, update, and remove products from the inventory. Manage product details including name, SKU, price, and stock levels. Organize products into categories for better management.
 
-![Product Management Screenshot](gifs.Products.gif)
+![Product Management Screenshot](gifs/Products.gif)
 
 ### Sales Management
 Handle sales transactions efficiently. Generate sales invoices for customer purchases, apply discounts, and manage payment methods. Track sales history and customer information.
