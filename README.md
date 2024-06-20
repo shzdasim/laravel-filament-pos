@@ -49,7 +49,9 @@ A point-of-sale (POS) application built with Laravel and Filament.
 
 3. **Run migrations and seed the database:**
     ```bash
-    php artisan migrate --seed
+    php artisan migrate
+    php artisan db:seed
+    php artisan db:seed --class=PermissionsSeeder
     ```
 
 4. **Serve the application:**
