@@ -59,10 +59,14 @@ A point-of-sale (POS) application built with Laravel and Filament.
 
 ## Key Features
 
+### Dashboard
+An intuitive dashboard providing quick access to key metrics such as total sales, total purchases, inventory status, and recent transactions. Visualize data through graphs and charts for better insights.
+
+![Dashboard Screenshot](gifs/Dashboard.gif)
 ### User Management
 Manage users with different permissions rather than roles. Admins can create, update, and delete user accounts, and assign specific permissions to control access to various parts of the application. Permissions include:
 - Create, Edit, Delete, and View for Applications, Users, SaleInvoices, PurchaseInvoices, Products, Categories, Suppliers, Customers, SaleReturns, and PurchaseReturns.
-
+![User Management gifs](gifs/UserPreference.gif)
 ### Product Management
 Add, update, and remove products from the inventory. Manage product details including name, SKU, price, and stock levels. Organize products into categories for better management.
 
@@ -71,26 +75,26 @@ Add, update, and remove products from the inventory. Manage product details incl
 ### Sales Management
 Handle sales transactions efficiently. Generate sales invoices for customer purchases, apply discounts, and manage payment methods. Track sales history and customer information.
 
-![Sales Management Screenshot](images/sales_management.png)
+![Sales Management Screenshot](gifs/SaleInvoices.gif)
 
 ### Purchase Management
 Manage purchase orders and supplier interactions. Create and update purchase invoices when stocking up inventory from suppliers. Track purchase history and supplier information.
 
-![Purchase Management Screenshot](images/purchase_management.png)
+![Purchase Management Screenshot](gifs/PurchaseInvoices.gif)
 
 ### Sales Return
 Process returns from customers. Generate sales return invoices to manage and track returned products and issue refunds or store credits.
+![Sale Return Management Screenshot](gifs/SaleReturns.gif)
 
 ### Purchase Return
 Handle returns to suppliers. Generate purchase return invoices for products returned to suppliers due to defects or other reasons.
+![Sale Return Management Screenshot](gifs/PurchaseReturns.gif)
 
 ### Reporting
 Generate comprehensive reports for sales, purchases, inventory levels, and returns. Use these reports to analyze business performance and make informed decisions.
-
-### Dashboard
-An intuitive dashboard providing quick access to key metrics such as total sales, total purchases, inventory status, and recent transactions. Visualize data through graphs and charts for better insights.
-
-![Dashboard Screenshot](images/dashboard.png)
+![Reports](gifs/SaleReport.gif)
+![Reports](gifs/PurchaseOrderReport.gif)
+![Reports](gifs/PurchaseReport.gif)
 
 ## Contributing
 
