@@ -59,42 +59,78 @@ A point-of-sale (POS) application built with Laravel and Filament.
 
 ## Key Features
 
+### Application Setup
+An intuitive setup process to get the application up and running quickly.
+
+![Application Setup](gifs/ApplicationSetup.gif)
+
 ### Dashboard
 An intuitive dashboard providing quick access to key metrics such as total sales, total purchases, inventory status, and recent transactions. Visualize data through graphs and charts for better insights.
 
-![Dashboard Screenshot](gifs/Dashboard.gif)
+![Dashboard](gifs/Dashboard.gif)
+
 ### User Management
 Manage users with different permissions rather than roles. Admins can create, update, and delete user accounts, and assign specific permissions to control access to various parts of the application. Permissions include:
 - Create, Edit, Delete, and View for Applications, Users, SaleInvoices, PurchaseInvoices, Products, Categories, Suppliers, Customers, SaleReturns, and PurchaseReturns.
-![User Management gifs](gifs/UserPreference.gif)
+
+![User Management](gifs/UserPreference.gif)
+
 ### Product Management
 Add, update, and remove products from the inventory. Manage product details including name, SKU, price, and stock levels. Organize products into categories for better management.
 
-![Product Management Screenshot](gifs/Products.gif)
+![Product Management](gifs/Products.gif)
 
 ### Sales Management
 Handle sales transactions efficiently. Generate sales invoices for customer purchases, apply discounts, and manage payment methods. Track sales history and customer information.
 
-![Sales Management Screenshot](gifs/SaleInvoices.gif)
+![Sales Management](gifs/SaleInvoices.gif)
 
 ### Purchase Management
 Manage purchase orders and supplier interactions. Create and update purchase invoices when stocking up inventory from suppliers. Track purchase history and supplier information.
 
-![Purchase Management Screenshot](gifs/PurchaseInvoices.gif)
+![Purchase Management](gifs/PurchaseInvoices.gif)
 
 ### Sales Return
 Process returns from customers. Generate sales return invoices to manage and track returned products and issue refunds or store credits.
-![Sale Return Management Screenshot](gifs/SaleReturns.gif)
+
+![Sales Return](gifs/SaleReturns.gif)
 
 ### Purchase Return
 Handle returns to suppliers. Generate purchase return invoices for products returned to suppliers due to defects or other reasons.
-![Sale Return Management Screenshot](gifs/PurchaseReturns.gif)
+
+![Purchase Return](gifs/PurchaseReturns.gif)
 
 ### Reporting
 Generate comprehensive reports for sales, purchases, inventory levels, and returns. Use these reports to analyze business performance and make informed decisions.
-![Reports](gifs/SaleReport.gif)
-![Reports](gifs/PurchaseOrderReport.gif)
-![Reports](gifs/PurchaseReport.gif)
+
+![Sales Report](gifs/SaleReport.gif)
+![Purchase Order Report](gifs/PurchaseOrderReport.gif)
+![Purchase Report](gifs/PurchaseReport.gif)
+
+### Suppliers Management
+Manage supplier information and interactions efficiently.
+
+![Suppliers](gifs/Suppliers.gif)
+
+### Customer Management
+Keep track of customer details and purchase history.
+
+![Customers](gifs/Customers.gif)
+
+### Categories Management
+Organize products into categories for easier management and navigation.
+
+![Categories](gifs/Categories.gif)
+
+### Print Sale Invoice
+Print invoices for sales transactions to provide customers with receipts.
+
+![Print Sale Invoice](gifs/PrintSaleInvoice.gif)
+
+### Login
+Secure login process for accessing the application.
+
+![Login](gifs/Login.gif)
 
 ## Contributing
 
