@@ -16,7 +16,11 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
             $table->foreignId('customer_id')->constrained()->cascadeOnDelete();
             $table->string('posted_number')->unique()->required();
-            $table->date('date');
+            $table->date('visit_date');
+            $table->date('next_visit_date');
+            $table->string('visit_reading')->nullable();
+            $table->string('next_visit_reading')->nullable();
+            $table->string('remarks')->nullable();
             $table->decimal('discount_percentage')->nullable();
             $table->decimal('tax_percentage')->nullable();
             $table->decimal('total')->nullable();

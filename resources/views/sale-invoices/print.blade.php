@@ -66,8 +66,24 @@
                 <td>{{ $invoice->posted_number }}</td>
             </tr>
             <tr>
-                <th>Date</th>
-                <td>{{ $invoice->date }}</td>
+                <th>Visit Date</th>
+                <td>{{ $invoice->visit_date }}</td>
+            </tr>
+            <tr>
+                <th>Next Visit Date</th>
+                <td>{{ $invoice->next_visit_date }}</td>
+            </tr>
+            <tr>
+                <th>Visit Reading</th>
+                <td>{{ $invoice->visit_reading }}</td>
+            </tr>
+            <tr>
+                <th>Next Visit Reading</th>
+                <td>{{ $invoice->next_visit_reading }}</td>
+            </tr>
+            <tr>
+                <th>Remarks</th>
+                <td>{{ $invoice->remarks }}</td>
             </tr>
             <tr>
                 <th>Customer Name</th>

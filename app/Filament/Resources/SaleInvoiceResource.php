@@ -7,6 +7,7 @@ use App\Models\Customer;
 use App\Models\Product;
 use App\Models\SaleInvoice;
 use App\Models\SaleReturn;
+use Carbon\Carbon;
 use Closure;
 use Filament\Actions\Action;
 use Filament\Forms;
@@ -64,11 +65,30 @@ class SaleInvoiceResource extends Resource
                             ->maxLength(255)
                             ->readOnly()
                             ->default(SaleInvoice::generateCode()),
-                        Forms\Components\DatePicker::make('date')
-                            ->required()
-                            ->default(now())
-                            ->native(false),
+                            Forms\Components\TextInput::make('remarks')                           
+                            ->maxLength(255)
                     ])->columns(3),
+                Forms\Components\Section::make()
+                ->schema([
+                    Forms\Components\DatePicker::make('visit_date')
+                    ->required()
+                    ->prefix('Visit')
+                    ->default(now())
+                    ->closeOnDateSelection()
+                    ->native(false),
+                Forms\Components\DatePicker::make('next_visit_date')
+                    ->required()
+                    ->suffix('Next Visit')
+                    ->default(Carbon::now()->addMonth())
+                    ->closeOnDateSelection()
+                    ->native(false),
+                    Forms\Components\TextInput::make('visit_reading')                            
+                    ->numeric()
+                    ->maxLength(255),
+                    Forms\Components\TextInput::make('next_visit_reading')                            
+                    ->numeric()
+                    ->maxLength(255),
+                ])->columns(4),
                 Forms\Components\Section::make()
                     ->schema([
                         Repeater::make('saleInvoiceItems')
@@ -76,40 +96,12 @@ class SaleInvoiceResource extends Resource
                             ->label('Sale Invoice Items')
                             ->schema([
                                 Forms\Components\Select::make('product_id')
+                                    ->relationship('product', 'name')
                                     ->label('Select Product')
                                     ->required()
                                     ->searchable()
                                     ->preload()
                                     ->reactive()
-                                    ->allowHtml()
-                                    ->getOptionLabelUsing(function ($value) {
-                                        $product = Product::find($value);
-                                        return $product ? $product->name : '';
-                                    })
-                                    ->getSearchResultsUsing(function (string $search = null) {
-                                        $query = Product::query();
-                                        
-                                        if ($search) {
-                                            $query->where('name', 'like', "%{$search}%")
-                                                ->orWhere('quantity', 'like', "%{$search}%")
-                                                ->orWhere('sale_price', 'like', "%{$search}%")
-                                                ->orWhere('purchase_price', 'like', "%{$search}%")
-                                                ->orWhere('avg_price', 'like', "%{$search}%");
-                                        }
-                                
-                                        return $query->get()
-                                            ->mapWithKeys(function ($product) {
-                                                return [$product->id => "
-                                                    <div>
-                                                        <strong>{$product->name}</strong><br>
-                                                        <span>Quantity: {$product->quantity}</span><br>
-                                                        <span>Sale Price: {$product->sale_price}</span><br>
-                                                        <span>Purchase Price: {$product->purchase_price}</span><br>
-                                                        <span>Avg Price: {$product->avg_price}</span>
-                                                    </div>
-                                                "];
-                                            });
-                                    })
                                     ->afterStateUpdated(function ($state, callable $set, callable $get) {
                                         if ($state) {
                                             $product = Product::find($state);
