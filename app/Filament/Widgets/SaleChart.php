@@ -23,9 +23,9 @@ class SaleChart extends ChartWidget
         $endDate = $end ? Carbon::parse($end): now()->endOfMonth();      // Default end date
 
         $data = SaleInvoice::query()
-            ->selectRaw('DATE(date) as date, SUM(total) as total_sale')
-            ->whereBetween('date', [$startDate, $endDate])
-            ->groupBy(DB::raw('DATE(date)'))
+            ->selectRaw('DATE(visit_date) as date, SUM(total) as total_sale')
+            ->whereBetween('visit_date', [$startDate, $endDate])
+            ->groupBy(DB::raw('DATE(visit_date)'))
             ->get();
 
         return [

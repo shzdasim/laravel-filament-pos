@@ -20,7 +20,7 @@ class StateWidget extends BaseWidget
         $startDate = $this->getStartDate();
         $endDate = $this->getEndDate();
 
-        $totalSales = SaleInvoice::whereBetween('date', [$startDate, $endDate])->sum('total');
+        $totalSales = SaleInvoice::whereBetween('visit_date', [$startDate, $endDate])->sum('total');
         $totalPurchase = PurchaseInvoice::whereBetween('posted_date', [$startDate, $endDate])->sum('total_amount');
         $totalProfit = $this->calculateTotalProfit($startDate, $endDate);
         $profitMarginPercentage = $totalSales > 0 ? ($totalProfit / $totalSales) * 100 : 0;
@@ -57,7 +57,7 @@ class StateWidget extends BaseWidget
 
     private function calculateTotalProfit($startDate, $endDate)
     {
-        $salesData = SaleInvoice::whereBetween('date', [$startDate, $endDate])
+        $salesData = SaleInvoice::whereBetween('visit_date', [$startDate, $endDate])
             ->with(['saleInvoiceItems.product', 'saleReturns'])
             ->get();
 
@@ -101,7 +101,7 @@ class StateWidget extends BaseWidget
 
     private function calculateTotalSaleReturn($startDate, $endDate)
     {
-        return SaleInvoice::whereBetween('date', [$startDate, $endDate])
+        return SaleInvoice::whereBetween('visit_date', [$startDate, $endDate])
             ->with('saleReturns')
             ->get()
             ->sum(function ($saleInvoice) {
@@ -111,7 +111,7 @@ class StateWidget extends BaseWidget
 
     private function calculateTotalGrossSale($startDate, $endDate)
     {
-        return SaleInvoice::whereBetween('date', [$startDate, $endDate])->sum('gross_amount');
+        return SaleInvoice::whereBetween('visit_date', [$startDate, $endDate])->sum('gross_amount');
     }
 
     protected function getStartDate(): Carbon

@@ -73,6 +73,7 @@ class AdminPanelProvider extends PanelProvider
                 ReportsPlugin::make()
             ])
             ->sidebarCollapsibleOnDesktop()
+            ->databaseNotifications()
             ->breadcrumbs(false);
     }
 }
