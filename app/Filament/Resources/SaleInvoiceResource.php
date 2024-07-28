@@ -325,21 +325,28 @@ class SaleInvoiceResource extends Resource
         }
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('user.name')
-                    ->numeric()
-                    ->sortable(),
                 Tables\Columns\TextColumn::make('customer.name')
                     ->numeric()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('posted_number')
+                    ->label('PO.NO')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('date')
+                Tables\Columns\TextColumn::make('visit_date')
                     ->date()
                     ->sortable(),
+                Tables\Columns\TextColumn::make('next_visit_date')
+                    ->date()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('visit_reading')
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('next_visit_reading')
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('discount_percentage')
+                    ->label('Disc%')
                     ->numeric()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('tax_percentage')
+                    ->label('Tax%')
                     ->numeric()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('total')
@@ -356,7 +363,27 @@ class SaleInvoiceResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                //
+                Tables\Filters\Filter::make('visit_date')
+                ->form([
+                    Forms\Components\DatePicker::make('visit_date_from')->label('Visit Date From'),
+                    Forms\Components\DatePicker::make('visit_date_to')->label('Visit Date To'),
+                ])
+                ->query(function ($query, array $data) {
+                    return $query
+                        ->when($data['visit_date_from'], fn($query) => $query->where('visit_date', '>=', $data['visit_date_from']))
+                        ->when($data['visit_date_to'], fn($query) => $query->where('visit_date', '<=', $data['visit_date_to']));
+                }),
+
+            Tables\Filters\Filter::make('next_visit_date')
+                ->form([
+                    Forms\Components\DatePicker::make('next_visit_date_from')->label('Next Visit Date From'),
+                    Forms\Components\DatePicker::make('next_visit_date_to')->label('Next Visit Date To'),
+                ])
+                ->query(function ($query, array $data) {
+                    return $query
+                        ->when($data['next_visit_date_from'], fn($query) => $query->where('next_visit_date', '>=', $data['next_visit_date_from']))
+                        ->when($data['next_visit_date_to'], fn($query) => $query->where('next_visit_date', '<=', $data['next_visit_date_to']));
+                }),
             ])
             ->actions([
                 Tables\Actions\ViewAction::make(),

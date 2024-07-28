@@ -3,7 +3,10 @@
 namespace App\Filament\Pages;
 
 use App\Filament\Widgets\PurchaseChart;
+use App\Filament\Widgets\SaleChart;
+use App\Filament\Widgets\StateWidget;
 use App\Filament\Widgets\TotalSalesWidget;
+use App\Filament\Widgets\UpcomingVisitsWidget;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Form;
@@ -34,5 +37,14 @@ class Dashboard extends \Filament\Pages\Dashboard
                 ->closeOnDateSelection(),
             ])->columns(2),
         ]);
+    }
+    public function getWidgets(): array
+    {
+        return [
+            UpcomingVisitsWidget::class,
+            StateWidget::class,
+            PurchaseChart::class,
+            SaleChart::class,
+        ];
     }
 }

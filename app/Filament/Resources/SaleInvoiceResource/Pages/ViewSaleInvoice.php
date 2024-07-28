@@ -74,7 +74,7 @@ class ViewSaleInvoice extends ViewRecord
         $message .= "Best regards,\n"
             . $application->name;
     
-        return "https://wa.me/" . $customer->phone_number . "?text=" . urlencode($message);
+        return "https://wa.me/" . $customer->phone . "?text=" . urlencode($message);
     }
     
 }

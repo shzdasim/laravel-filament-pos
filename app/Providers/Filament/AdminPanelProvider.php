@@ -23,13 +23,13 @@ class AdminPanelProvider extends PanelProvider
 {
     public function panel(Panel $panel): Panel
     {
-        // Retrieve the first application details
-        $applicationName = Application::getFirstName();
-        $applicationLogoUrl = Application::getFirstLogoUrl();
-        $applicationLicense = Application::getFirstLicense();
+        // // Retrieve the first application details
+        // $applicationName = Application::getFirstName();
+        // $applicationLogoUrl = Application::getFirstLogoUrl();
+        // $applicationLicense = Application::getFirstLicense();
 
-        // Concatenate the name and license for the brand name
-        $brandName = $applicationName;
+        // // Concatenate the name and license for the brand name
+        // $brandName = $applicationName;
         
         return $panel
             ->default()
@@ -39,7 +39,7 @@ class AdminPanelProvider extends PanelProvider
             ->passwordReset()
             ->emailVerification()
             ->profile(EditProfile::class, isSimple: false)
-            ->brandName("$brandName", "$applicationLogoUrl")
+          //  ->brandName("$brandName", "$applicationLogoUrl")
             ->font('Poppins')
             ->colors([
                 'danger' => Color::Red,
